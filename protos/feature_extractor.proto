@@ -1,0 +1,11 @@
+syntax = "proto2";
+package rare.protos;
+
+message FeatureExtractor {
+  oneof feature_extractor_oneof {
+    BaselineFeatureExtractor baseline_feature_extractor = 1;
+  }
+}
+
+message BaselineFeatureExtractor {
+}

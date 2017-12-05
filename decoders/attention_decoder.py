@@ -36,9 +36,9 @@ class AttentionDecoder():
     if isinstance(feature_map, list):
       feature_map = feature_map[-1]
     
-    with tf.variable_scope(scope, 'AttentionDecoder'):
+    with tf.variable_scope(scope, 'AttentionDecoder',
+                           [feature_map, decoder_inputs]):
       batch_size = shape_utils.combined_static_and_dynamic_shape(feature_map)[0]
-
       initial_attention = tf.expand_dims(
         tf.zeros(tf.shape(feature_map)[:3], dtype=tf.float32),
         axis=3
@@ -49,9 +49,7 @@ class AttentionDecoder():
       last_attention = initial_attention
 
       for i in range(num_steps):
-        if i > 0:
-          tf.get_variable_scope().reuse_variables()
-
+        if i > 0: tf.get_variable_scope().reuse_variables()
         with tf.name_scope('Step_{}'.format(i)):
           decoder_input_i = self._output_embedding.embed(decoder_inputs[:,i], num_labels)
           output, new_state, attention_weights = \
@@ -64,15 +62,14 @@ class AttentionDecoder():
           rnn_outputs_list.append(output)
           last_state = new_state
           last_attention = attention_weights
-    rnn_outputs = tf.concat(rnn_outputs_list, axis=1) # => [batch_size, num_steps, output_dims]
+      rnn_outputs = tf.concat(rnn_outputs_list, axis=1) # => [batch_size, num_steps, output_dims]
 
-    # projects rnn_outputs to logits
-    logits = fully_connected(
-      rnn_outputs,
-      num_labels,
-      activation_fn=None,
-      scope='FullyConnected_logits'
-    )
+      logits = fully_connected(
+        rnn_outputs,
+        num_labels,
+        activation_fn=None,
+        scope='FullyConnected_logits'
+      )
     return logits
 
   def _decode_step(self, feature_map, last_state, last_attention, decoder_input):
