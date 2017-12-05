@@ -10,8 +10,8 @@ message RnnCell {
 
 message LstmCell {
   optional uint32 num_units = 1 [default=128];
-  optional boolean use_peepholes = 2 [default=false];
-  optional float32 forget_bias = 3 [default=1.0];
+  optional bool use_peepholes = 2 [default=false];
+  optional float forget_bias = 3 [default=1.0];
 }
 
 message GruCell {

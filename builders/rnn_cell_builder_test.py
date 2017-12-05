@@ -19,7 +19,10 @@ class RnnCellBuilderTest(tf.test.TestCase):
     text_format.Merge(rnn_cell_text_proto, rnn_cell_proto)
     rnn_cell_object = rnn_cell_builder.build(rnn_cell_proto)
 
-    self.assertEqual(rnn_cell_object.state_size, 1024)
+    lstm_state_tuple = rnn_cell_object.state_size
+
+    self.assertEqual(lstm_state_tuple[0], 1024)
+    self.assertEqual(lstm_state_tuple[1], 1024)
 
   def test_build_gru_cell(self):
     rnn_cell_text_proto = """
