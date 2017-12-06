@@ -20,7 +20,7 @@ class AttentionDecoder():
   def decode(self,
              feature_map,
              num_steps,
-             num_labels=None,
+             num_classes=None,
              decoder_inputs=None,
              scope=None):
     """Decode sequence output.
@@ -51,7 +51,7 @@ class AttentionDecoder():
       for i in range(num_steps):
         if i > 0: tf.get_variable_scope().reuse_variables()
         with tf.name_scope('Step_{}'.format(i)):
-          decoder_input_i = self._output_embedding.embed(decoder_inputs[:,i], num_labels)
+          decoder_input_i = self._output_embedding.embed(decoder_inputs[:,i], num_classes)
           output, new_state, attention_weights = \
             self._decode_step(
               feature_map,
@@ -66,7 +66,7 @@ class AttentionDecoder():
 
       logits = fully_connected(
         rnn_outputs,
-        num_labels,
+        num_classes,
         activation_fn=None,
         scope='FullyConnected_logits'
       )

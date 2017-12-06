@@ -1,0 +1,13 @@
+syntax = "proto2";
+package rare.protos;
+
+message Loss {
+  oneof loss_oneof {
+    SequenceCrossEntropyLoss sequence_cross_entropy_loss = 1;
+  }
+}
+
+message SequenceCrossEntropyLoss {
+  optional bool sequence_normalize = 1 [default=true];
+  optional bool sample_normalize = 2 [default=true];
+}
