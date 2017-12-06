@@ -1,0 +1,112 @@
+syntax = "proto2";
+package seglink.protos;
+
+
+message PreprocessingStep {
+  oneof preprocessing_step {
+    RandomCropImage random_crop_image = 1;
+    ResizeImageRandomMethod resize_image_random_method = 2;
+    ResizeImage resize_image = 3;
+    RemoveOutOfBoundaryPolygons remove_out_of_boundary_polygons = 4;
+    NormalizeImage normalize_image = 5;
+    RandomPixelValueScale random_pixel_value_scale = 6;
+    RandomRgbToGray random_rgb_to_gray = 7;
+    RandomAdjustBrightness random_adjust_brightness = 8;
+    RandomAdjustContrast random_adjust_contrast = 9;
+    RandomAdjustHue random_adjust_hue = 10;
+    RandomAdjustSaturation random_adjust_saturation = 11;
+    RandomDistortColor random_distort_color = 12;
+    RandomJitterPolygons random_jitter_polygons = 13;
+    ImageToFloat image_to_float = 14;
+    SubtractChannelMean subtract_channel_mean = 15;
+    RgbToGray rgb_to_gray = 16;
+  }
+}
+
+message RandomCropImage {
+  enum OverlapMode {
+    JACCARD = 1;
+    OVERLAP = 2;
+  }
+  optional OverlapMode overlap_mode = 1 [default=JACCARD];
+  repeated float min_overlaps = 2;
+  optional float min_aspect_ratio = 3 [default=0.5];
+  optional float max_aspect_ratio = 4 [default=2.0];
+  optional float min_scale_ratio = 5 [default=0.3];
+  optional float max_scale_ratio = 6 [default=1.0];
+  optional int32 num_max_trials = 7 [default=50];
+}
+
+message ResizeImageRandomMethod {
+  optional int32 target_height = 1 [default=512];
+  optional int32 target_width  = 2 [default=512];
+}
+
+message ResizeImage {
+  enum Method {
+    AREA=1;
+    BICUBIC=2;
+    BILINEAR=3;
+    NEAREST_NEIGHBOR=4;
+  }
+  optional int32 target_height = 1 [default=512];
+  optional int32 target_width  = 2 [default=512];
+  optional Method method       = 3 [default=BILINEAR];
+}
+
+message RemoveOutOfBoundaryPolygons {
+}
+
+message NormalizeImage {
+  optional float original_minval = 1;
+  optional float original_maxval = 2;
+  optional float target_minval = 3 [default=0];
+  optional float target_maxval = 4 [default=1];
+}
+
+message RandomPixelValueScale {
+  optional float minval = 1 [default=0.9];
+  optional float maxval = 2 [default=1.1];
+}
+
+message RandomRgbToGray {
+  optional float probability = 1 [default=0.1];
+}
+
+message RandomAdjustBrightness {
+  optional float max_delta=1 [default=0.2];
+}
+
+message RandomAdjustContrast {
+  optional float min_delta = 1 [default=0.8];
+  optional float max_delta = 2 [default=1.25];
+}
+
+message RandomAdjustHue {
+  optional float max_delta = 1 [default=0.02];
+}
+
+message RandomAdjustSaturation {
+  optional float min_delta = 1 [default=0.8];
+  optional float max_delta = 2 [default=1.25];
+}
+
+message RandomDistortColor {
+  optional int32 color_ordering = 1;
+}
+
+message RandomJitterPolygons {
+  optional float ratio = 1 [default=0.05];
+}
+
+message ImageToFloat {
+}
+
+message SubtractChannelMean {
+  // The mean to subtract from each channel. Should be of same dimension of
+  // channels in the input image.
+  repeated float means = 1;
+}
+
+message RgbToGray {
+}
