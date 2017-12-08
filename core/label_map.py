@@ -3,81 +3,94 @@ import string
 class LabelMap(object):
 
   def __init__(self,
-               case_sensitive=False,
-               include_punctuations=False,
+               character_set=None,
                num_eos=1):
-    self._case_sensitive = case_sensitive
-    self._include_punctuations = include_punctuations
+    """
+    Args:
+      character_set: a list of utf8-encoded characters
+      num_eos: number of end-of-sequence symbols to append
+    """
+    if not isinstance(character_set, list):
+      raise ValueError('character_set must be provided as a list')
+    if len(frozenset(character_set)) != len(character_set):
+      raise ValueError('Found duplicate characters in character_set')
+
+    self._character_set = character_set
     self._num_eos = num_eos
+    (self._char_to_label_table, self._label_to_char_table) = self._build_lookup_tables()
 
-    char_to_label_map, label_to_char_map = \
-      self._build_char_label_maps()
-
-    char_to_label_map_items = char_to_label_map.items()
-    self._char_to_label_table = tf.contrib.lookup.HashTable(
-      tf.contrib.lookup.KeyValueTensorInitializer(
-        keys=[t[0] for t in char_to_label_map_items],
-        values=[t[1] for t in char_to_label_map_items],
-      )
-    )
-
-    label_to_char_map_items = label_to_char_map.items()
-    self._label_to_char_table = tf.contrib.lookup.HashTable(
-      tf.contrib.lookup.KeyValueTensorInitializer(
-        keys=[t[0] for t in label_to_char_map_items],
-        values=[t[1] for t in label_to_char_map_items],
-      )
-    )
+  @property
+  def eos_label(self):
+    return 0
 
   @property
   def go_label(self):
-    pass
+    return 1
 
-  def _build_char_label_maps(self):
-    char_to_label_map = {}
-    label_to_char_map = {}
+  @property
+  def unk_label(self):
+    return 2
 
-    index_offset = 0
-    for idx, c in enumerate(string.digits):
-      label = index_offset + idx
-      char_to_label_map[c] = label
-      label_to_char_map[label] = c
+  @property
+  def num_control_symbols(self):
+    return 3
 
-    index_offset += len(string.digits)
-    for idx, c in enumerate(string.ascii_lowercase):
-      label = index_offset + idx
-      char_to_label_map[c] = label
-      label_to_char_map[label] = c
+  @property
+  def num_characters(self):
+    return len(self._character_set)
 
-    if self._case_sensitive:
-      index_offset += len(string.ascii_lowercase)
-      for idx, c in enumerate(string.ascii_uppercase):
-        label = index_offset + idx
-        char_to_label_map[c] = label
-        label_to_char_map[label] = c
-    else:
-      for idx, c in enumerate(string.ascii_uppercase):
-        label = index_offset + idx
-        char_to_label_map[c] = label
+  @property
+  def num_labels(self):
+    return self.num_characters + self.num_control_symbols
 
-    if self._include_punctuations:
-      index_offset += len(string.ascii_uppercase)
-      for idx, c in enumerate(string.punctuation):
-        char_to_label_map[c] = label
-        label_to_char_map[label] = c
-
-    return char_to_label_map, label_to_char_map
+  def _build_lookup_tables(self):
+    chars = ['', '', ''] + self._character_set
+    labels = [self.eos_label, self.go_label, self.unk_label] + \
+             list(range(self.num_control_symbols, self.num_control_symbols + self.num_characters))
+    char_to_label_table = tf.contrib.lookup.HashTable(
+      tf.contrib.lookup.KeyValueTensorInitializer(
+        chars[self.num_control_symbols:],
+        labels[self.num_control_symbols:]
+        key_dtype=tf.string,
+        value_dtype=tf.int32
+      )
+    )
+    label_to_char_table = tf.contrib.lookup.HashTable(
+      tf.contrib.lookup.KeyValueTensorInitializer(
+        labels,
+        chars,
+        key_dtype=tf.int32,
+        value_dtype=tf.string
+      )
+    )
+    return char_to_label_table, label_to_char_table
 
   def text_to_labels(self, text):
     """Convert text strings to label sequences.
     Args:
       text: ascii encoded string tensor of shape [batch_size]
+
     """
+    batch_size = tf.shape(text)[0]
     chars = tf.string_split(strings, delimiter='')
+    labels_sparse = self._char_to_label_table.lookup(chars.values)
+    labels_dense = tf.sparse_tensor_to_dense(
+      chars.indices,
+      chars.dense_shape,
+      labels_sparse,
+      default_value=self.eos_label
+    ) # => [batch_size, max_text_length]
 
-    chars.values()
+    # pad eos symbols
+    labels_padded = tf.concat(
+      [labels_dense,
+       tf.fill([batch_size, self.num_eos])],
+      axis=1
+    ) # => [batch_size, max_text_length + self.num_eos]
 
-    map_fn()
+    def _convert(text):
+      chars = tf.string_split(text, )
+      self._char_to_label_table.lookup()
 
 
   def labels_to_text(self, labels):
