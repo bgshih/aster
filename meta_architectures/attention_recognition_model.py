@@ -4,7 +4,7 @@ from rare.core import label_mapping
 from rare.utils import shape_utils
 
 
-class AttentionRecognizer(core.RecognitionModel):
+class AttentionRecognitionModel(core.RecognitionModel):
 
   def __init__(self,
                num_classes=None,
@@ -54,3 +54,6 @@ class AttentionRecognizer(core.RecognitionModel):
     self._groundtruth_dict['padded_groundtruth_labels'] = groundtruth_dict['padded_groundtruth_labels']
     # length of groundtruth labels, including padded EOS symbols
     self._groundtruth_dict['padded_groundtruth_lengths'] = groundtruth_dict['padded_groundtruth_lengths']
+
+  def provide_groundtruth(self, groundtruth_transcript):
+    pass

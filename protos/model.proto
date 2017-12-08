@@ -1,0 +1,15 @@
+syntax = "proto2";
+package rare.protos;
+
+message RecognitionModel {
+  oneof recognition_model_oneof {
+    AttentionRecognitionModel attention_recognition_model = 1;
+  }
+}
+
+message AttentionRecognitionModel {
+  optional uint32 num_classes = 1 [default=2];
+  optional FeatureExtractor feature_extractor = 2;
+  optional LabelMap label_map = 3;
+  optional Loss loss = 4;
+}
