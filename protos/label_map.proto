@@ -1,0 +1,15 @@
+syntax = "proto2";
+package rare.protos;
+
+message LabelMap {
+  optional int32 num_eos = 1 [default=1];
+  optional CharacterSet character_set = 2;
+}
+
+message CharacterSet {
+  oneof source_oneof {
+    string text_file = 1 [default=""];
+    string text_string = 2 [default=""];
+  }
+  optional string delimiter = 3 [default=""];
+}
