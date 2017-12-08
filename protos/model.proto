@@ -13,8 +13,7 @@ message RecognitionModel {
 }
 
 message AttentionRecognitionModel {
-  optional uint32 num_classes = 1 [default=2];
-  optional FeatureExtractor feature_extractor = 2;
-  optional LabelMap label_map = 3;
-  optional Loss loss = 4;
+  optional FeatureExtractor feature_extractor = 1;
+  optional LabelMap label_map = 2;
+  optional Loss loss = 3;
 }

@@ -32,7 +32,6 @@ def _build_attention_recognition_model(model_config, is_training):
   )
 
   model_object = attention_recognition_model.AttentionRecognitionModel(
-    num_classes=model_config.num_classes,
     feature_extractor=feature_extractor_object,
     label_map=label_map_object,
     loss=loss_object
