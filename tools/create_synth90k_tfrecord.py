@@ -88,7 +88,9 @@ def main(_):
         fields.TfExampleFields.channels: \
           dataset_util.int64_feature(3),
         fields.TfExampleFields.colorspace: \
-          dataset_util.bytes_feature('rgb'.encode('utf-8'))
+          dataset_util.bytes_feature('rgb'.encode('utf-8')),
+        fields.TfExampleFields.transcript: \
+          dataset_util.bytes_feature(groundtruth_text.encode('utf-8'))
       }))
       writer.write(example.SerializeToString())
 

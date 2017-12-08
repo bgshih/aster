@@ -4,7 +4,7 @@ class InputDataFields(object):
   key = 'key'
   source_id = 'source_id'
   filename = 'filename'
-  groundtruth_transcript = 'groundtruth_transcript'
+  groundtruth_text = 'groundtruth_text'
 
 
 class TfExampleFields(object):
