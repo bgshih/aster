@@ -5,7 +5,7 @@ from rare.builders import model_builder
 from rare.protos import model_pb2
 
 
-def ModelBuilderTest(tf.test.TestCase):
+class ModelBuilderTest(tf.test.TestCase):
 
   def test_build_model(self):
     model_text_proto = """
@@ -16,7 +16,11 @@ def ModelBuilderTest(tf.test.TestCase):
         }
       }
       label_map {
-
+        num_eos: 1
+        character_set {
+          text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+          delimiter: ""
+        }
       }
       loss {
         sequence_cross_entropy_loss {

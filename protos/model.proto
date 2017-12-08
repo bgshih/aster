@@ -1,6 +1,11 @@
 syntax = "proto2";
 package rare.protos;
 
+import "rare/protos/feature_extractor.proto";
+import "rare/protos/label_map.proto";
+import "rare/protos/loss.proto";
+
+
 message RecognitionModel {
   oneof recognition_model_oneof {
     AttentionRecognitionModel attention_recognition_model = 1;

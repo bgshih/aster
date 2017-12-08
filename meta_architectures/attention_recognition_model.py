@@ -1,17 +1,17 @@
 import tensorflow as tf
 
-from rare.core import label_mapping
+from rare.core import label_map
 from rare.utils import shape_utils
 
 
-class AttentionRecognitionModel(core.RecognitionModel):
+class AttentionRecognitionModel(object):
 
   def __init__(self,
                num_classes=None,
                feature_extractor=None,
                label_map=None,
                loss=None):
-    super(AttentionRecognizer, self).__init__(num_classes)
+    self._num_classes = num_classes
     self._feature_extractor = feature_extractor
     self._label_map = label_map
     self._loss = loss
@@ -30,7 +30,7 @@ class AttentionRecognitionModel(core.RecognitionModel):
     with tf.variable_scope('Decoder'):
       groundtruth_labels = self._groundtruth_dict['padded_groundtruth_labels'] # => [batch_size, max_time]
       batch_size = shape_utils.combined_static_and_dynamic_shape(groundtruth_labels)[0]
-      go_labels = tf.tile([label_mapping.GO_LABEL], batch_size)
+      go_labels = tf.fill([batch_size], tf.constant(label_map.go_label, dtype=tf.int64))
       decoder_inputs = tf.concat([go_labels, groundtruth_labels], axis=1)
       logits = self._decoder.predict(feature_maps, max_length, num_classes, decoder_inputs)
 

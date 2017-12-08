@@ -4,7 +4,7 @@ from rare.protos import feature_extractor_pb2
 from rare.feature_extractors import baseline_feature_extractor
 
 
-def build(config):
+def build(config, is_training):
   if not isinstance(config, feature_extractor_pb2.FeatureExtractor):
     raise ValueError('config not of type '
                      'feature_extractor_pb2.FeatureExtractor')
