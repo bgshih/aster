@@ -17,9 +17,10 @@ class LabelMapTest(tf.test.TestCase):
         tf.string
       )
       test_labels = test_label_map.text_to_labels(test_text)
+      test_text_from_labels = test_label_map.labels_to_text(test_labels)
+
     with self.test_session() as sess:
       tf.tables_initializer().run()
-      print(test_labels.eval())
       self.assertAllEqual(
         test_labels.eval(),
         [[3, 0, 0, 0],
@@ -27,6 +28,10 @@ class LabelMapTest(tf.test.TestCase):
          [0, 0, 0, 0],
          [3, 4, 28, 0],
          [2, 3, 2, 0]]
+      )
+      self.assertAllEqual(
+        test_text_from_labels.eval(),
+        [b'a', b'b', b'', b'abz', b'a']
       )
 
 

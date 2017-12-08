@@ -91,11 +91,11 @@ class LabelMap(object):
     """
     batch_size = tf.shape(text)[0]
     chars = tf.string_split(text, delimiter='')
-    labels_sparse = self._char_to_label_table.lookup(chars.values)
+    labels_values = self._char_to_label_table.lookup(chars.values)
     labels_dense = tf.sparse_to_dense(
       chars.indices,
       chars.dense_shape,
-      labels_sparse,
+      labels_values,
       default_value=self.eos_label # use EOS to pad shorter text
     ) # => [batch_size, max_text_length]
 
@@ -117,10 +117,6 @@ class LabelMap(object):
     Returns:
       text: string tensor with shape [batch_size]
     """
-    chars_sparse = self._label_to_char_table.lookup(labels)
-    chars_dense = tf.sparse_tensor_to_dense(
-      chars_sparse,
-      default_value=''
-    )
-    text = tf.reduce_join(chars_dense, axis=1)
+    chars = self._label_to_char_table.lookup(labels)
+    text = tf.reduce_join(chars, axis=1)
     return text
