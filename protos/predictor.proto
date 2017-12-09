@@ -2,6 +2,7 @@ syntax = "proto2";
 package rare.protos;
 
 import "rare/protos/rnn_cell.proto";
+import "rare/protos/embedding.proto";
 
 message Predictor {
   oneof predictor_oneof {
@@ -11,4 +12,7 @@ message Predictor {
 
 message AttentionPredictor {
   optional RnnCell rnn_cell = 1;
+  optional int32 num_attention_units = 2 [default=128];
+  optional int32 attention_conv_kernel_size = 3 [default=5];
+  optional Embedding output_embedding = 4;
 }

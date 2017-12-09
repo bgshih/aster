@@ -16,10 +16,13 @@ def build(config,
   if predictor_oneof == 'attention_predictor':
     attention_predictor_config = config.attention_predictor
 
-    rnn_cell = rnn_cell_builder.build(attention_predictor_config.rnn_cell)
+    rnn_cell_object = rnn_cell_builder.build(attention_predictor_config.rnn_cell)
+    embedding_object = embedding_builder.build(attention_predictor_config.output_embedding)
     attention_predictor_object = attention_predictor.AttentionPredictor(
-      rnn_cell=rnn_cell,
-      label_map=label_map,
+      rnn_cell=rnn_cell_object,
+      num_attention_units=attention_predictor_config.num_attention_units,
+      attention_conv_kernel_size=attention_predictor_config.attention_conv_kernel_size,
+      output_embedding=
       is_training=is_training
     )
     return attention_predictor_object
