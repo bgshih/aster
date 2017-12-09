@@ -5,7 +5,7 @@ from rare.protos import predictor_pb2
 from rare.builders import rnn_cell_builder
 from rare.builders import embedding_builder
 
-def build(config, is_training=None):
+def build(config, is_training):
   if not isinstance(config, predictor_pb2.Predictor):
     raise ValueError('config not of type predictor_pb2.predictor')
   predictor_oneof = config.WhichOneof('predictor_oneof')

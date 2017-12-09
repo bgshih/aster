@@ -18,39 +18,34 @@ class PredictorBuilderTest(tf.test.TestCase):
           num_units: 512
         }
       }
+      num_attention_units: 128
+      attention_conv_kernel_size: 5
+      output_embedding {
+        one_hot_embedding {
+        }
+      }
+      max_num_steps: 50
     }
     """
     predictor_proto = predictor_pb2.Predictor()
     text_format.Merge(predictor_text_proto, predictor_proto)
 
-    test_label_map = label_map.LabelMap(
-      character_set=list(string.ascii_lowercase),
-      num_eos=1)
-    predictor_object = predictor_builder.build(
-      predictor_proto,
-      label_map=test_label_map,
-      is_training=True
-    )
+    predictor_object = predictor_builder.build(predictor_proto, True)
 
     # self.assertEqual(predictor_object._num_attention_units, 256)
     # self.assertEqual(predictor_object._attention_conv_kernel_size, 5)
 
     test_batch_size = 1
-    test_num_steps = 2
-    test_num_labels = 2
+    test_num_steps = tf.constant(2, tf.int32)
+    test_num_classes = 2
     test_feature_map = tf.constant([[[[1], [-1]], [[2], [-2]]]], dtype=tf.float32)
     test_decoder_inputs = tf.constant([[1, 0]])
-    # logits = predictor_object.decode(
-    #   test_feature_map,
-    #   test_num_steps,
-    #   test_num_labels,
-    #   test_predictor_inputs
-    # )
-
-    logits = predictor_object.predict(
+    test_logits = predictor_object.predict(
       test_feature_map,
-      decoder_inputs=test_decoder_inputs,
-      decoder_inputs_lengths=[1])
+      test_num_steps,
+      num_classes=test_num_classes,
+      decoder_inputs=test_decoder_inputs
+    )
 
     # with self.test_session() as sess:
     #   sess.run(tf.global_variables_initializer())

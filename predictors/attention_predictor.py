@@ -19,11 +19,11 @@ class AttentionPredictor(object):
     self._output_embedding = output_embedding
     self._is_training = is_training
 
-  def decode(self,
-             feature_map,
-             num_steps,
-             num_classes=None,
-             decoder_inputs=None):
+  def predict(self,
+              feature_map,
+              num_steps,
+              num_classes=None,
+              decoder_inputs=None):
     """Decode sequence output.
     Args:
       feature_map: a float32 tensor of shape [batch_size, height, width, depth]
@@ -64,14 +64,18 @@ class AttentionPredictor(object):
         with tf.name_scope('Step_{}'.format(i)):
           is_in_range = tf.less(i, num_steps)
           decoder_input_i = tf.cond(is_in_range,
-            true_fn = lambda: self._output_embedding.embed(decoder_inputs[:,i], num_classes),
-            false_fn = lambda: tf.zeros([batch_size, num_classes])
+            true_fn=(lambda:
+              self._output_embedding.embed(
+                decoder_inputs[:,i], num_classes)
+            ),
+            false_fn=lambda: tf.zeros([batch_size, num_classes])
           )
           output_candidate, new_state, alignment = \
-            self._decode_step(vh, last_state, last_alignment, decoder_input_i)
+            self._predict_step(vh, last_state, last_alignment, decoder_input_i)
           output = tf.cond(is_in_range,
             true_fn = lambda: output_candidate,
-            false_fn = lambda: tf.zeros_like([batch_size, self._rnn_cell.output_size])
+            false_fn = lambda: tf.zeros_like([batch_size, self._rnn_cell.output_size],
+                                             tf.float32)
           )
           rnn_outputs_list.append(output)
           last_state = new_state
@@ -92,20 +96,18 @@ class AttentionPredictor(object):
       ) # => [batch_size, num_steps, num_classes]
     return logits
 
-  def _decode_step(self, vh, last_state, last_attention, decoder_input):
+  def _predict_step(self, feature_map_proj, last_state, last_attention, decoder_input):
     """
     Args:
-      vh: a float32 tensor with shape [batch_size, map_height, map_width, num_attention_units]
+      feature_map_proj: a float32 tensor with shape [batch_size, map_height, map_width, num_attention_units]
       last_state: a float32 tensor with shape [batch_size, ]
       last_attention: a float32 tensor with shape [batch_size, map_height, map_width, depth]
       decoder_input: a float32 tensor with shape [batch_size, decoder_input_size]
     """
     batch_size, map_height, map_width, map_depth = \
-      shape_utils.combined_static_and_dynamic_shape(feature_map)
-
-    feature_map_depth = feature_map.get_shape()[3].value
-    if batch_size is None or feature_map_depth is None:
-      raise ValueError('batch_size and feature_map_depth must be determined')
+      shape_utils.combined_static_and_dynamic_shape(feature_map_proj)
+    if batch_size is None or map_depth is None:
+      raise ValueError('batch_size and map_depth must be static')
 
     last_attention_conv = conv2d(
       last_attention,
@@ -126,7 +128,7 @@ class AttentionPredictor(object):
       [batch_size, 1, 1, self._num_attention_units]
     ) # => [batch_size, 1, 1, num_attention_units], bias is added
     attention_sum = tf.add(
-      tf.add(vh, last_attention_conv),
+      tf.add(feature_map_proj, last_attention_conv),
       ws
     ) # => [batch_size, map_height, map_width, num_attention_units]
     attention_scores = conv2d(
@@ -146,10 +148,10 @@ class AttentionPredictor(object):
     ) # => [batch_size, map_height * map_width, 1]
     alignment = tf.reshape(
       alignment_flat,
-      [batch_size, map_height, map_width, map_depth]
+      [batch_size, map_height, map_width, 1]
     )
     feature_flat = tf.reshape(
-      feature_map,
+      feature_map_proj,
       [batch_size, map_width * map_height, map_depth]
     ) # => [batch_size, map_height * map_width, map_depth]
     feature_flat_trans = tf.transpose(
@@ -157,7 +159,7 @@ class AttentionPredictor(object):
       [0, 2, 1]
     ) # => [batch_size, map_depth, map_height * map_width]
     glimpse = tf.squeeze(
-      tf.matmul(feature_flat_trans, feature_flat),
+      tf.matmul(feature_flat_trans, alignment_flat),
       axis=2
     ) # [batch_size, map_depth]
 
