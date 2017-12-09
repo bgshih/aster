@@ -1,0 +1,14 @@
+syntax = "proto2";
+package rare.protos;
+
+import "rare/protos/rnn_cell.proto";
+
+message Predictor {
+  oneof predictor_oneof {
+    AttentionPredictor attention_predictor = 1;
+  }
+}
+
+message AttentionPredictor {
+  optional RnnCell rnn_cell = 1;
+}

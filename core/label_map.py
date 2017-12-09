@@ -55,7 +55,7 @@ class LabelMap(object):
     return len(self._character_set)
 
   @property
-  def num_labels(self):
+  def num_classes(self):
     return self.num_characters + self.num_control_symbols
 
   def _build_lookup_tables(self):

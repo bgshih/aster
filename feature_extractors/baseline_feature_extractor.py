@@ -29,7 +29,6 @@ class BaselineFeatureExtractor(object):
          arg_scope([conv2d], kernel_size=3, padding='SAME', stride=1), \
          arg_scope([max_pool2d], stride=2), \
          tf.variable_scope(scope, 'FeatureExtractor'):
-
       conv1 = conv2d(preprocessed_inputs, 64)
       pool1 = max_pool2d(conv1, 2)
       conv2 = conv2d(pool1, 128)
@@ -41,17 +40,4 @@ class BaselineFeatureExtractor(object):
       conv6 = conv2d(conv5, 512)
       pool6 = max_pool2d(conv6, 2, stride=[2, 1])
       conv7 = conv2d(pool6, 512, kernel_size=[2, 1], padding='VALID')
-
-      # print('conv1', conv1)
-      # print('pool1', pool1)
-      # print('conv2', conv2)
-      # print('pool2', pool2)
-      # print('conv3', conv3)
-      # print('conv4', conv4)
-      # print('pool4', pool4)
-      # print('conv5', conv5)
-      # print('conv6', conv6)
-      # print('pool6', pool6)
-      # print('conv7', conv7)
-
     return [conv7]

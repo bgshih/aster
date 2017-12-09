@@ -7,15 +7,24 @@ from rare.utils import shape_utils
 class AttentionRecognitionModel(object):
 
   def __init__(self,
-               num_classes=None,
                feature_extractor=None,
                label_map=None,
                loss=None):
-    self._num_classes = num_classes
     self._feature_extractor = feature_extractor
     self._label_map = label_map
     self._loss = loss
     self._groundtruth_dict = {}
+    self._num_classes = label_map.num_labels
+
+  @property
+  def num_classes(self):
+    return self._num_classes
+
+  def preprocess(self, resized_inputs):
+    if resized_inputs.dtype is not tf.float32:
+      raise ValueError('`preprocess` expects a tf.float32 tensor')
+    with tf.name_scope('Preprocess'):
+      return self._feature_extractor.preprocess(resized_inputs)
 
   def predict(self, preprocessed_images, max_length):
     """
@@ -24,15 +33,26 @@ class AttentionRecognitionModel(object):
     Returns:
       predictions_dict: a diction of predicted tensors
     """
+    if not self._is_training:
+      raise ValueError('`predict` should only be called when self._is_training is True')
+
     with tf.variable_scope('FeatureExtractor'):
       feature_maps = self._feature_extractor.extract_features(preprocessed_images)
 
     with tf.variable_scope('Decoder'):
-      groundtruth_labels = self._groundtruth_dict['padded_groundtruth_labels'] # => [batch_size, max_time]
+      groundtruth_labels = self._label_map.text_to_labels(
+        self._groundtruth_dict['groundtruth_text']
+      )
       batch_size = shape_utils.combined_static_and_dynamic_shape(groundtruth_labels)[0]
-      go_labels = tf.fill([batch_size], tf.constant(label_map.go_label, dtype=tf.int64))
+      go_labels = tf.fill([batch_size], tf.constant(self._label_map.go_label, dtype=tf.int64))
       decoder_inputs = tf.concat([go_labels, groundtruth_labels], axis=1)
-      logits = self._decoder.predict(feature_maps, max_length, num_classes, decoder_inputs)
+
+      logits = self._decoder.predict(
+        feature_maps,
+        max_length,
+        self._num_classes,
+        decoder_inputs
+      )
 
     predictions_dict = {
       'logits': logits
@@ -45,15 +65,5 @@ class AttentionRecognitionModel(object):
     groundtruth_lengths = self._groundtruth_dict['padded_groundtruth_lengths']
     return self._loss(prediction_logits, groundtruth_labels, groundtruth_lengths)
 
-  def provide_groundtruth(self, groundtruth_dict):
-    if 'padded_groundtruth_labels' not in groundtruth_dict or \
-       'padded_groundtruth_lengths' not in groundtruth_dict:
-      raise ValueError('groundtruth_dict does not have all the expected keys')
-
-    # groundtruth labels padded with EOS symbols
-    self._groundtruth_dict['padded_groundtruth_labels'] = groundtruth_dict['padded_groundtruth_labels']
-    # length of groundtruth labels, including padded EOS symbols
-    self._groundtruth_dict['padded_groundtruth_lengths'] = groundtruth_dict['padded_groundtruth_lengths']
-
-  def provide_groundtruth(self, groundtruth_transcript):
-    pass
+  def provide_groundtruth(self, groundtruth_text_list):
+    self._groundtruth_dict['groundtruth_text'] = tf.stack(groundtruth_text_list, axis=0)

@@ -26,7 +26,7 @@ class AttentionDecoder():
     """Decode sequence output.
     Args:
       feature_map: a float32 tensor of shape [batch_size, height, width, depth]
-      num_steps: a Python integer
+      num_steps: a int32 scalar tensor indicating the number of decoding steps
       decoder_inputs: an int tensor of shape [batch_size, steps].
                       It should be groundtruth labels with GO and END symbols appended
                       during training and GO symbols during testing.

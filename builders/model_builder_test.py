@@ -10,7 +10,6 @@ class ModelBuilderTest(tf.test.TestCase):
   def test_build_model(self):
     model_text_proto = """
     attention_recognition_model {
-      num_classes: 27
       feature_extractor {
         baseline_feature_extractor {
         }

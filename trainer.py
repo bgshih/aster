@@ -47,12 +47,12 @@ def _create_losses(input_queue, create_model_fn):
   model = create_model_fn()
 
   # get inputs
-  images_list, transcript_list = _get_inputs(input_queue)
-  images_list = [model.preprocess(image) for image in images_list]
-  images = tf.stack(images_list, axis=0)
+  images_list, groundtruth_text_list = _get_inputs(input_queue)
+  preprocessed_images_list = [model.preprocess(image) for image in images_list]
+  images = tf.stack(preprocessed_images_list, axis=0)
 
   # provide groundtruth
-  model.provide_groundtruth(transcript_list)
+  model.provide_groundtruth(groundtruth_text_list)
   predictions_dict = model.predict(images)
 
   losses_dict = model.loss(predictions_dict)
