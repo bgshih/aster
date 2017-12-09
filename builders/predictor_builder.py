@@ -5,12 +5,9 @@ from rare.protos import predictor_pb2
 from rare.builders import rnn_cell_builder
 from rare.builders import embedding_builder
 
-def build(config,
-          label_map=None,
-          is_training=None):
+def build(config, is_training=None):
   if not isinstance(config, predictor_pb2.Predictor):
-    raise ValueError('config not of type '
-                     'predictor_pb2.predictor')
+    raise ValueError('config not of type predictor_pb2.predictor')
   predictor_oneof = config.WhichOneof('predictor_oneof')
 
   if predictor_oneof == 'attention_predictor':
@@ -22,7 +19,8 @@ def build(config,
       rnn_cell=rnn_cell_object,
       num_attention_units=attention_predictor_config.num_attention_units,
       attention_conv_kernel_size=attention_predictor_config.attention_conv_kernel_size,
-      output_embedding=
+      output_embedding=embedding_object,
+      max_num_steps=attention_predictor_config.max_num_steps,
       is_training=is_training
     )
     return attention_predictor_object

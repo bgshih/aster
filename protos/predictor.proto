@@ -15,4 +15,5 @@ message AttentionPredictor {
   optional int32 num_attention_units = 2 [default=128];
   optional int32 attention_conv_kernel_size = 3 [default=5];
   optional Embedding output_embedding = 4;
+  optional int32 max_num_steps = 5 [default=32];
 }
