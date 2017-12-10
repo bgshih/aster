@@ -23,7 +23,8 @@ class AttentionPredictor(object):
               feature_map,
               num_steps,
               num_classes=None,
-              decoder_inputs=None):
+              decoder_inputs=None,
+              scope=None):
     """Decode sequence output.
     Args:
       feature_map: a float32 tensor of shape [batch_size, height, width, depth]
@@ -36,9 +37,11 @@ class AttentionPredictor(object):
     if isinstance(feature_map, list):
       feature_map = feature_map[-1]
     
-    with tf.variable_scope(None, 'Decode',
+    with tf.variable_scope(scope, 'Decode',
                            [feature_map, num_steps, decoder_inputs]):
       batch_size = shape_utils.combined_static_and_dynamic_shape(feature_map)[0]
+      if batch_size is None:
+        raise ValueError('batch_size must be static')
 
       # project feature map to vh
       vh = conv2d(
@@ -87,11 +90,8 @@ class AttentionPredictor(object):
             last_alignment = alignment
 
       rnn_outputs = tf.stack(rnn_outputs_list, axis=1)
-      rnn_outputs = tf.slice(
-        rnn_outputs,
-        [0, 0, 0],
-        [-1, num_steps, -1]
-      ) # => [batch_size, num_steps, output_dims]
+      rnn_outputs = rnn_outputs[:,:num_steps,:]  # => [batch_size, num_steps, output_dims]
+
 
       logits = fully_connected(
         rnn_outputs,

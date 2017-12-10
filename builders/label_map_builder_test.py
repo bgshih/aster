@@ -9,7 +9,6 @@ class LabelMapBuilderTest(tf.test.TestCase):
 
   def test_build_label_map(self):
     label_map_text_proto = """
-    num_eos: 2
     character_set {
       text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
       delimiter: ""
@@ -23,21 +22,30 @@ class LabelMapBuilderTest(tf.test.TestCase):
       ['a', 'b', '', 'abz', '0a='],
       tf.string
     )
-    test_labels = label_map_object.text_to_labels(test_text)
+    test_labels, text_lengths = label_map_object.text_to_labels(test_text, return_lengths=True)
     test_text_from_labels = label_map_object.labels_to_text(test_labels)
 
     with self.test_session() as sess:
       tf.tables_initializer().run()
+      outputs = sess.run({
+        'test_labels': test_labels,
+        'text_lengths': text_lengths,
+        'text_from_labels': test_text_from_labels
+      })
       self.assertAllEqual(
-        test_labels.eval(),
-        [[3, 0, 0,  0, 0],
-         [4, 0, 0,  0, 0],
-         [0, 0, 0,  0, 0],
-         [3, 4, 28, 0, 0],
-         [2, 3, 2,  0, 0]]
+        outputs['test_labels'],
+        [[3, 0, 0 ],
+         [4, 0, 0 ],
+         [0, 0, 0 ],
+         [3, 4, 28],
+         [2, 3, 2 ]]
       )
       self.assertAllEqual(
-        test_text_from_labels.eval(),
+        outputs['text_lengths'],
+        [1, 1, 0, 3, 3]
+      )
+      self.assertAllEqual(
+        outputs['text_from_labels'],
         [b'a', b'b', b'', b'abz', b'a']
       )
 

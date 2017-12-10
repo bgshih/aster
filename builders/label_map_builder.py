@@ -12,10 +12,7 @@ def build(config):
     raise ValueError('config not of type label_map_pb2.LabelMap')
 
   character_set = _build_character_set(config.character_set)
-  label_map_object = label_map.LabelMap(
-    num_eos=config.num_eos,
-    character_set=character_set
-  )
+  label_map_object = label_map.LabelMap(character_set=character_set)
   return label_map_object
 
 

@@ -5,13 +5,10 @@ import tensorflow as tf
 
 class LabelMap(object):
 
-  def __init__(self,
-               character_set=None,
-               num_eos=1):
+  def __init__(self, character_set=None):
     """
     Args:
       character_set: a list of utf8-encoded characters
-      num_eos: number of end-of-sequence symbols to append
     """
     if not isinstance(character_set, list):
       raise ValueError('character_set must be provided as a list')
@@ -19,7 +16,6 @@ class LabelMap(object):
       raise ValueError('Found duplicate characters in character_set')
 
     self._character_set = character_set
-    self._num_eos = num_eos
     (self._char_to_label_table, self._label_to_char_table) = self._build_lookup_tables()
 
   @property
@@ -82,13 +78,18 @@ class LabelMap(object):
     )
     return char_to_label_table, label_to_char_table
 
-  def text_to_labels(self, text):
+  def text_to_labels(self, text, pad_value=None, return_lengths=False):
     """Convert text strings to label sequences.
     Args:
       text: ascii encoded string tensor with shape [batch_size]
+      pad_value: Value used to pad labels to the same length.
+                 By default it is eos_label.
+      return_lengths: if True, also return text lenghts
     Returns:
       labels_padded: labels padded with eos symbols
     """
+    if pad_value is None:
+      pad_value = self.eos_label
     batch_size = tf.shape(text)[0]
     chars = tf.string_split(text, delimiter='')
     labels_values = self._char_to_label_table.lookup(chars.values)
@@ -96,19 +97,19 @@ class LabelMap(object):
       chars.indices,
       chars.dense_shape,
       labels_values,
-      default_value=self.eos_label # use EOS to pad shorter text
+      default_value=pad_value
     ) # => [batch_size, max_text_length]
 
-    # pad eos symbols
-    eos_labels = tf.fill(
-      [batch_size, self._num_eos],
-      tf.constant(self.eos_label, dtype=tf.int64)
-    )
-    labels_padded = tf.concat(
-      [labels_dense, eos_labels],
-      axis=1
-    ) # => [batch_size, max_text_length + self._num_eos]
-    return labels_padded
+    if return_lengths:
+      # calculate text lengths
+      text_lengths = tf.reduce_sum(
+        tf.cast(
+          tf.not_equal(labels_dense, pad_value),
+          tf.int32),
+        axis=1)
+      return labels_dense, text_lengths
+    else:
+      return labels_dense
 
   def labels_to_text(self, labels):
     """Convert labels to text strings.

@@ -2,8 +2,7 @@ syntax = "proto2";
 package rare.protos;
 
 message LabelMap {
-  optional int32 num_eos = 1 [default=1];
-  optional CharacterSet character_set = 2;
+  optional CharacterSet character_set = 1;
 }
 
 message CharacterSet {

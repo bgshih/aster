@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from rare.builders import feature_extractor_builder
+from rare.builders import predictor_builder
 from rare.builders import loss_builder
 from rare.builders import label_map_builder
 from rare.meta_architectures import attention_recognition_model
@@ -24,15 +25,13 @@ def _build_attention_recognition_model(model_config, is_training):
     model_config.feature_extractor,
     is_training=is_training
   )
-  label_map_object = label_map_builder.build(
-    model_config.label_map
-  )
-  loss_object = loss_builder.build(
-    model_config.loss
-  )
+  predictor_object = predictor_builder.build(model_config.predictor, is_training=is_training)
+  label_map_object = label_map_builder.build(model_config.label_map)
+  loss_object = loss_builder.build(model_config.loss)
 
   model_object = attention_recognition_model.AttentionRecognitionModel(
     feature_extractor=feature_extractor_object,
+    predictor=predictor_object,
     label_map=label_map_object,
     loss=loss_object
   )

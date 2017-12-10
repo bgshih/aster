@@ -2,6 +2,7 @@ syntax = "proto2";
 package rare.protos;
 
 import "rare/protos/feature_extractor.proto";
+import "rare/protos/predictor.proto";
 import "rare/protos/label_map.proto";
 import "rare/protos/loss.proto";
 
@@ -14,6 +15,7 @@ message RecognitionModel {
 
 message AttentionRecognitionModel {
   optional FeatureExtractor feature_extractor = 1;
-  optional LabelMap label_map = 2;
-  optional Loss loss = 3;
+  optional Predictor predictor = 2;
+  optional LabelMap label_map = 3;
+  optional Loss loss = 4;
 }
