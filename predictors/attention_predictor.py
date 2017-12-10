@@ -85,13 +85,13 @@ class AttentionPredictor(object):
               false_fn=lambda: tf.zeros([batch_size, self._rnn_cell.output_size],
                                         dtype=tf.float32)
             )
-            rnn_outputs_list.append(output)
-            last_state = new_state
-            last_alignment = alignment
+
+          rnn_outputs_list.append(output)
+          last_state = new_state
+          last_alignment = alignment
 
       rnn_outputs = tf.stack(rnn_outputs_list, axis=1)
       rnn_outputs = rnn_outputs[:,:num_steps,:]  # => [batch_size, num_steps, output_dims]
-
 
       logits = fully_connected(
         rnn_outputs,

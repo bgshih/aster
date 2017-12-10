@@ -35,8 +35,8 @@ class AttentionRecognitionModel(object):
     """
     batch_size = shape_utils.combined_static_and_dynamic_shape(preprocessed_images)[0]
 
-    with tf.variable_scope('FeatureExtractor'):
-      feature_maps = self._feature_extractor.extract_features(preprocessed_images)
+    with tf.variable_scope('FeatureExtractor') as scope:
+      feature_maps = self._feature_extractor.extract_features(preprocessed_images, scope=scope)
 
     with tf.variable_scope('Predictor') as scope:
       num_decode_steps = tf.reduce_max(
