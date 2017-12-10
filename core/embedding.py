@@ -12,6 +12,11 @@ class Embedding(object):
 class OneHotEmbedding(Embedding):
 
   def embed(self, labels, depth):
+    """
+    Args:
+      labels: int32 tensor with shape [batch_size]
+      depth: Python integer
+    """
     return tf.one_hot(
       labels,
       depth,

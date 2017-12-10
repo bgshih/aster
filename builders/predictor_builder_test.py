@@ -24,17 +24,13 @@ class PredictorBuilderTest(tf.test.TestCase):
         one_hot_embedding {
         }
       }
-      max_num_steps: 50
+      max_num_steps: 10
     }
     """
     predictor_proto = predictor_pb2.Predictor()
     text_format.Merge(predictor_text_proto, predictor_proto)
-
     predictor_object = predictor_builder.build(predictor_proto, True)
-
-    # self.assertEqual(predictor_object._num_attention_units, 256)
-    # self.assertEqual(predictor_object._attention_conv_kernel_size, 5)
-
+    
     test_batch_size = 1
     test_num_steps = tf.constant(2, tf.int32)
     test_num_classes = 2
@@ -47,10 +43,10 @@ class PredictorBuilderTest(tf.test.TestCase):
       decoder_inputs=test_decoder_inputs
     )
 
-    # with self.test_session() as sess:
-    #   sess.run(tf.global_variables_initializer())
-    #   outputs_dict = sess.run({'logits': logits})
-    #   print(outputs_dict['logits'])
+    with self.test_session() as sess:
+      sess.run(tf.global_variables_initializer())
+      outputs_dict = sess.run({'logits': test_logits})
+      print(outputs_dict['logits'])
 
 
 if __name__ == '__main__':

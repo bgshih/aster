@@ -39,14 +39,6 @@ class AttentionPredictor(object):
     with tf.variable_scope(None, 'Decode',
                            [feature_map, num_steps, decoder_inputs]):
       batch_size = shape_utils.combined_static_and_dynamic_shape(feature_map)[0]
-      initial_state = self._rnn_cell.zero_state(batch_size, tf.float32)
-      initial_alignment = tf.expand_dims(
-        tf.zeros(tf.shape(feature_map)[:3], dtype=tf.float32),
-        axis=3
-      )
-      rnn_outputs_list = []
-      last_state = initial_state
-      last_alignment = initial_alignment
 
       # project feature map to vh
       vh = conv2d(
@@ -58,30 +50,43 @@ class AttentionPredictor(object):
         scope='Conv_vh'
       ) # => [batch_size, map_height, map_width, num_attention_units]
 
-      for i in range(self._max_num_steps):
-        if i > 0: tf.get_variable_scope().reuse_variables()
+      initial_state = self._rnn_cell.zero_state(batch_size, tf.float32)
+      initial_alignment = tf.expand_dims(
+        tf.zeros(tf.shape(feature_map)[:3],
+                 dtype=tf.float32),
+        axis=3
+      )
+      rnn_outputs_list = []
+      last_state = initial_state
+      last_alignment = initial_alignment
+      with tf.variable_scope('DecodeSteps'):
+        for i in range(self._max_num_steps):
+          if i > 0: tf.get_variable_scope().reuse_variables()
 
-        with tf.name_scope('Step_{}'.format(i)):
-          is_in_range = tf.less(i, num_steps)
-          decoder_input_i = tf.cond(is_in_range,
-            true_fn=(lambda:
-              self._output_embedding.embed(
-                decoder_inputs[:,i], num_classes)
-            ),
-            false_fn=lambda: tf.zeros([batch_size, num_classes])
-          )
-          output_candidate, new_state, alignment = \
-            self._predict_step(vh, last_state, last_alignment, decoder_input_i)
-          output = tf.cond(is_in_range,
-            true_fn = lambda: output_candidate,
-            false_fn = lambda: tf.zeros_like([batch_size, self._rnn_cell.output_size],
-                                             tf.float32)
-          )
-          rnn_outputs_list.append(output)
-          last_state = new_state
-          last_alignment = alignment
+          with tf.name_scope('Step_{}'.format(i)):
+            is_in_range = tf.less(i, num_steps)
+            decoder_input_i = tf.cond(
+              is_in_range,
+              true_fn=(lambda:
+                self._output_embedding.embed(
+                  tf.squeeze(tf.slice(decoder_inputs, [0, i], [-1, 1]), axis=1),
+                  num_classes)
+              ),
+              false_fn=lambda: tf.zeros([batch_size, num_classes], tf.float32)
+            )
+            output_candidate, new_state, alignment = \
+              self._predict_step(vh, last_state, last_alignment, decoder_input_i)
+            output = tf.cond(
+              is_in_range,
+              true_fn=lambda: output_candidate,
+              false_fn=lambda: tf.zeros([batch_size, self._rnn_cell.output_size],
+                                        dtype=tf.float32)
+            )
+            rnn_outputs_list.append(output)
+            last_state = new_state
+            last_alignment = alignment
 
-      rnn_outputs = tf.concat(rnn_outputs_list, axis=1)
+      rnn_outputs = tf.stack(rnn_outputs_list, axis=1)
       rnn_outputs = tf.slice(
         rnn_outputs,
         [0, 0, 0],
@@ -104,10 +109,13 @@ class AttentionPredictor(object):
       last_attention: a float32 tensor with shape [batch_size, map_height, map_width, depth]
       decoder_input: a float32 tensor with shape [batch_size, decoder_input_size]
     """
-    batch_size, map_height, map_width, map_depth = \
+    batch_size, map_height, map_width, map_depth = (
       shape_utils.combined_static_and_dynamic_shape(feature_map_proj)
+    )
     if batch_size is None or map_depth is None:
       raise ValueError('batch_size and map_depth must be static')
+    if map_depth != self._num_attention_units:
+      raise ValueError('map_depth must be equal to self._num_attention_units')
 
     last_attention_conv = conv2d(
       last_attention,
@@ -154,12 +162,8 @@ class AttentionPredictor(object):
       feature_map_proj,
       [batch_size, map_width * map_height, map_depth]
     ) # => [batch_size, map_height * map_width, map_depth]
-    feature_flat_trans = tf.transpose(
-      feature_flat,
-      [0, 2, 1]
-    ) # => [batch_size, map_depth, map_height * map_width]
     glimpse = tf.squeeze(
-      tf.matmul(feature_flat_trans, alignment_flat),
+      tf.matmul(feature_flat, alignment_flat, transpose_a=True),
       axis=2
     ) # [batch_size, map_depth]
 
