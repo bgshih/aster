@@ -23,8 +23,7 @@ REGISTER_OP("StringFiltering")
   .Attr("include_charset: string");
 
 
-template <typename T>
-class StringFiltering : public OpKernel {
+class StringFilteringOp : public OpKernel {
 public:
   explicit StringFilteringOp(OpKernelConstruction* context): OpKernel(context) {
     OP_REQUIRES_OK(context,

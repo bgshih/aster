@@ -1,15 +1,19 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(rare)
+cmake_minimum_required(VERSION 2.8)
+project(rare)
 
 # compiler flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${OpenMP_CXX_FLAGS} -Wall -fPIC -D_GLIBCXX_USE_CXX11_ABI=0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${OpenMP_CXX_FLAGS} -Wall -fPIC -D_GLIBCXX_USE_CXX11_ABI=0")
 
 # TensorFlow dependencies
-EXECUTE_PROCESS(COMMAND python3 -c "import os; os.environ['TF_CPP_MIN_LOG_LEVEL']='3'; import tensorflow as tf; print(tf.sysconfig.get_include())"
-                OUTPUT_VARIABLE TF_INC)
-MESSAGE(STATUS "Found TF_INC: " ${TF_INC})
+execute_process(COMMAND python3 -c "import os, sys; os.environ['TF_CPP_MIN_LOG_LEVEL']='3'; import tensorflow as tf; sys.stdout.write(tf.sysconfig.get_include()); sys.stdout.flush()" OUTPUT_VARIABLE TF_INC)
+message(STATUS "Found TF_INC: " ${TF_INC})
+execute_process(COMMAND python3 -c "import os, sys; os.environ['TF_CPP_MIN_LOG_LEVEL']='3'; import tensorflow as tf; sys.stdout.write(tf.sysconfig.get_lib()); sys.stdout.flush()" OUTPUT_VARIABLE TF_LIB)
+message(STATUS "Found TF_LIB: " ${TF_LIB})
 
 # target
-INCLUDE_DIRECTORIES(${TF_INC})
-ADD_LIBRARY(rare SHARED 
+include_directories(${TF_INC} "${TF_INC}/external/nsync/public")
+link_directories(${TF_LIB})
+add_library(rare SHARED 
   string_filtering_op.cc)
+target_link_libraries(rare tensorflow_framework)
+
