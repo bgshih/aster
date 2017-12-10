@@ -134,6 +134,22 @@ class PreprocessorBuilderTest(tf.test.TestCase):
         'min_delta': 0.7,
         'max_delta': 1.3
     })
+
+  def test_string_filtering(self):
+    preprocessor_text_proto = """
+    random_adjust_contrast {
+      lower_case: true
+      include_charset: "abc"
+    }
+    """
+    preprocessor_proto = preprocessor_pb2.PreprocessingStep()
+    text_format.Merge(preprocessor_text_proto, preprocessor_proto)
+    function, args = preprocessor_builder.build(preprocessor_proto)
+    self.assertEqual(function, preprocessor.string_filtering)
+    self.assert_dictionary_close(args, {
+        'lower_case': True,
+        'include_charset': "abc"
+    })
   
 
 if __name__ == '__main__':

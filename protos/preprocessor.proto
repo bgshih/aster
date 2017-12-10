@@ -17,6 +17,7 @@ message PreprocessingStep {
     ImageToFloat image_to_float = 11;
     SubtractChannelMean subtract_channel_mean = 12;
     RgbToGray rgb_to_gray = 13;
+    StringFiltering string_filtering = 14;
   }
 }
 
@@ -85,4 +86,9 @@ message SubtractChannelMean {
 }
 
 message RgbToGray {
+}
+
+message StringFiltering {
+  optional bool lower_case = 1 [default=False];
+  optional string include_charset = 2 [default=""];
 }

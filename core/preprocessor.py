@@ -1,4 +1,6 @@
 import sys
+import string
+
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 
@@ -355,8 +357,9 @@ def rgb_to_gray(image):
   return tf.image.rgb_to_grayscale(image)
 
 
-def text_to_lowercase(text):
-  return ops.string_lowercase(text)
+def string_filtering(text, lower_case=False, charset=""):
+  return ops.string_filtering([text],
+    lower_case=lower_case, charset=charset)
 
 
 def get_default_func_arg_map():
