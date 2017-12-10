@@ -49,17 +49,17 @@ import logging
 import tensorflow as tf
 from google.protobuf import text_format
 
-from core import trainer
-from core.builders import input_reader_builder
-from core.builders import model_builder
-from core.protos import input_reader_pb2
-from core.protos import model_pb2
-from core.protos import pipeline_pb2
-from core.protos import train_pb2
+from rare import trainer
+from rare.builders import input_reader_builder
+from rare.builders import model_builder
+from rare.protos import input_reader_pb2
+from rare.protos import model_pb2
+from rare.protos import pipeline_pb2
+from rare.protos import train_pb2
 
-# logging.getLogger('tensorflow').propagate = False # avoid logging duplicates
-# tf.logging.set_verbosity(tf.logging.INFO)
-# logging.basicConfig(level=logging.INFO)
+logging.getLogger('tensorflow').propagate = False # avoid logging duplicates
+tf.logging.set_verbosity(tf.logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 flags = tf.app.flags
 flags.DEFINE_string('master', '', 'BNS name of the TensorFlow master to use.')

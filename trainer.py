@@ -33,7 +33,7 @@ def _get_inputs(input_queue):
   read_data_list = input_queue.dequeue()
   def _extract_images_and_targets(read_data):
     image = read_data[fields.InputDataFields.image]
-    transcript = read_data[fields.InputDataFields.groundtruth_transcript]
+    transcript = read_data[fields.InputDataFields.groundtruth_text]
     return image, transcript
   return zip(*map(_extract_images_and_targets, read_data_list))
 
@@ -48,12 +48,12 @@ def _create_losses(input_queue, create_model_fn):
 
   # get inputs
   images_list, groundtruth_text_list = _get_inputs(input_queue)
-  preprocessed_images_list = [model.preprocess(image) for image in images_list]
-  images = tf.stack(preprocessed_images_list, axis=0)
+  images = tf.stack(images_list, axis=0)
+  preprocessed_images = model.preprocess(images)
 
   # provide groundtruth
   model.provide_groundtruth(groundtruth_text_list)
-  predictions_dict = model.predict(images)
+  predictions_dict = model.predict(preprocessed_images)
 
   losses_dict = model.loss(predictions_dict)
   for loss_tensor in losses_dict.values():

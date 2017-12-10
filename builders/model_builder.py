@@ -8,14 +8,14 @@ from rare.meta_architectures import attention_recognition_model
 from rare.protos import model_pb2
 
 
-def build(config, is_training):
-  if not isinstance(config, model_pb2.RecognitionModel):
-    raise ValueError('config not of type '
+def build(model_config, is_training):
+  if not isinstance(model_config, model_pb2.RecognitionModel):
+    raise ValueError('model_config not of type '
                      'model_pb2.RecognitionModel')
 
-  model_oneof = config.WhichOneof('recognition_model_oneof')
+  model_oneof = model_config.WhichOneof('recognition_model_oneof')
   if model_oneof == 'attention_recognition_model':
-    return _build_attention_recognition_model(config.attention_recognition_model, is_training)
+    return _build_attention_recognition_model(model_config.attention_recognition_model, is_training)
   else:
     raise ValueError('Unknown recognition_model_oneof: {}'.format(model_oneof))
 

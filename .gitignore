@@ -102,3 +102,6 @@ ENV/
 
 # protobuf
 *_pb2.py
+
+# experiments logs
+log*/

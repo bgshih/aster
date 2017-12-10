@@ -356,7 +356,8 @@ def rgb_to_gray(image):
 
 def get_default_func_arg_map():
   prep_func_arg_map = {
-      resize_image: (fields.InputDataFields.image),
+      resize_image: (fields.InputDataFields.image,),
+      resize_image_random_method: (fields.InputDataFields.image,),
       random_pixel_value_scale: (fields.InputDataFields.image,),
       random_rgb_to_gray: (fields.InputDataFields.image,),
       random_adjust_brightness: (fields.InputDataFields.image,),

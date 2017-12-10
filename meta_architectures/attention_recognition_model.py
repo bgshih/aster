@@ -24,8 +24,7 @@ class AttentionRecognitionModel(object):
   def preprocess(self, resized_inputs):
     if resized_inputs.dtype is not tf.float32:
       raise ValueError('`preprocess` expects a tf.float32 tensor')
-    with tf.name_scope('Preprocess'):
-      return self._feature_extractor.preprocess(resized_inputs)
+    return self._feature_extractor.preprocess(resized_inputs)
 
   def predict(self, preprocessed_images):
     """
@@ -55,11 +54,12 @@ class AttentionRecognitionModel(object):
     return predictions_dict
 
   def loss(self, predictions_dict):
-    return self._loss(
+    loss = self._loss(
       predictions_dict['logits'],
       self._groundtruth_dict['prediction_target'],
       self._groundtruth_dict['text_lengths'] + 1
     )
+    return {'RecognitionLoss': loss}
 
   def provide_groundtruth(self, groundtruth_text_list):
     batch_size = len(groundtruth_text_list)
