@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 
 from rare.core import standard_fields as fields
+from rare.c_ops import ops
 
 
 def _apply_with_random_selector(x, func, num_cases):
@@ -354,6 +355,10 @@ def rgb_to_gray(image):
   return tf.image.rgb_to_grayscale(image)
 
 
+def text_to_lowercase(text):
+  return ops.string_lowercase(text)
+
+
 def get_default_func_arg_map():
   prep_func_arg_map = {
       resize_image: (fields.InputDataFields.image,),
@@ -368,6 +373,7 @@ def get_default_func_arg_map():
       image_to_float: (fields.InputDataFields.image,),
       subtract_channel_mean: (fields.InputDataFields.image,),
       rgb_to_gray: (fields.InputDataFields.image,),
+      text_to_lowercase: (fields.InputDataFields.groundtruth_text,)
   }
   return prep_func_arg_map
 
