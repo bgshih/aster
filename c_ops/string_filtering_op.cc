@@ -19,7 +19,7 @@ using namespace tensorflow;
 REGISTER_OP("StringFiltering")
   .Input("input_string: string")
   .Output("output_string: string")
-  .Attr("loewr_case: bool = False")
+  .Attr("lower_case: bool = False")
   .Attr("include_charset: string");
 
 
@@ -27,7 +27,7 @@ class StringFilteringOp : public OpKernel {
 public:
   explicit StringFilteringOp(OpKernelConstruction* context): OpKernel(context) {
     OP_REQUIRES_OK(context,
-                   context->GetAttr("loewr_case", &loewr_case_));
+                   context->GetAttr("lower_case", &lower_case_));
     string charset_string;
     OP_REQUIRES_OK(context,
                    context->GetAttr("include_charset", &charset_string));
@@ -53,7 +53,7 @@ public:
     for (int i = 0; i < num_strings; i++) {
       string orig_string = input_string_tensor(i);
       string processed_string = "";
-      if (loewr_case_) {
+      if (lower_case_) {
         transform(orig_string.begin(), orig_string.end(), orig_string.begin(), ::tolower);
       }
       for (char c : orig_string) {
@@ -67,7 +67,7 @@ public:
 
 private:
   unordered_set<char> charset_;
-  bool loewr_case_;
+  bool lower_case_;
 };
 
 REGISTER_KERNEL_BUILDER(Name("StringFiltering").Device(DEVICE_CPU),

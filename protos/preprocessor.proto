@@ -89,6 +89,6 @@ message RgbToGray {
 }
 
 message StringFiltering {
-  optional bool lower_case = 1 [default=False];
+  optional bool lower_case = 1 [default=false];
   optional string include_charset = 2 [default=""];
 }

@@ -60,6 +60,7 @@ PREPROCESSING_FUNCTION_MAP = {
     'image_to_float': preprocessor.image_to_float,
     'subtract_channel_mean': preprocessor.subtract_channel_mean,
     'rgb_to_gray': preprocessor.rgb_to_gray,
+    'string_filtering': preprocessor.string_filtering,
 }
 
 

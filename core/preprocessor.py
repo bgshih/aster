@@ -357,9 +357,9 @@ def rgb_to_gray(image):
   return tf.image.rgb_to_grayscale(image)
 
 
-def string_filtering(text, lower_case=False, charset=""):
+def string_filtering(text, lower_case=False, include_charset=""):
   return ops.string_filtering([text],
-    lower_case=lower_case, charset=charset)
+    lower_case=lower_case, include_charset=include_charset)[0]
 
 
 def get_default_func_arg_map():
@@ -376,7 +376,7 @@ def get_default_func_arg_map():
       image_to_float: (fields.InputDataFields.image,),
       subtract_channel_mean: (fields.InputDataFields.image,),
       rgb_to_gray: (fields.InputDataFields.image,),
-      text_to_lowercase: (fields.InputDataFields.groundtruth_text,)
+      string_filtering: (fields.InputDataFields.groundtruth_text,)
   }
   return prep_func_arg_map
 

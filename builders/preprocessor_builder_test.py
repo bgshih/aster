@@ -4,6 +4,7 @@ from google.protobuf import text_format
 
 from rare.builders import preprocessor_builder
 from rare.core import preprocessor
+from rare.core import standard_fields as fields
 from rare.protos import preprocessor_pb2
 
 
@@ -137,7 +138,7 @@ class PreprocessorBuilderTest(tf.test.TestCase):
 
   def test_string_filtering(self):
     preprocessor_text_proto = """
-    random_adjust_contrast {
+    string_filtering {
       lower_case: true
       include_charset: "abc"
     }
@@ -150,7 +151,37 @@ class PreprocessorBuilderTest(tf.test.TestCase):
         'lower_case': True,
         'include_charset': "abc"
     })
-  
+
+    test_input_strings = [t.encode('utf-8') for t in ['abc', 'abcde', 'ABCDE']]
+    expected_output_string = [t.encode('utf-8') for t in ['abc', 'abc', 'abc']]
+    test_processed_strings = [function(t, **args) for t in test_input_strings]
+    with self.test_session() as sess:
+      outputs = sess.run(test_processed_strings)
+      self.assertAllEqual(outputs, expected_output_string)
+
+  def test_string_filtering_2(self):
+    preprocessor_text_proto = """
+    string_filtering {
+      lower_case: false
+      include_charset: "abcdABCD"
+    }
+    """
+    preprocessor_proto = preprocessor_pb2.PreprocessingStep()
+    text_format.Merge(preprocessor_text_proto, preprocessor_proto)
+    function, args = preprocessor_builder.build(preprocessor_proto)
+    self.assertEqual(function, preprocessor.string_filtering)
+    self.assert_dictionary_close(args, {
+        'lower_case': False,
+        'include_charset': "abcdABCD"
+    })
+
+    test_input_strings = [t.encode('utf-8') for t in ['abc', 'abcde', '!=ABC DE~']]
+    expected_output_string = [t.encode('utf-8') for t in ['abc', 'abcd', 'ABCD']]
+    test_processed_strings = [function(t, **args) for t in test_input_strings]
+    with self.test_session() as sess:
+      outputs = sess.run(test_processed_strings)
+      self.assertAllEqual(outputs, expected_output_string)
+
 
 if __name__ == '__main__':
   tf.test.main()
