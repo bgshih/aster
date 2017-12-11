@@ -6,14 +6,12 @@ import "rare/protos/embedding.proto";
 
 message Predictor {
   oneof predictor_oneof {
-    AttentionPredictor attention_predictor = 1;
+    BahdanauAttentionPredictor bahdanau_attention_predictor = 1;
   }
 }
 
-message AttentionPredictor {
+message BahdanauAttentionPredictor {
   optional RnnCell rnn_cell = 1;
   optional int32 num_attention_units = 2 [default=128];
-  optional int32 attention_conv_kernel_size = 3 [default=5];
-  optional Embedding output_embedding = 4;
-  optional int32 max_num_steps = 5 [default=32];
+  optional int32 max_num_steps = 3 [default=40];
 }

@@ -1,172 +1,71 @@
+import functools
+
 import tensorflow as tf
-from tensorflow.contrib.layers import conv2d, fully_connected
+from tensorflow.contrib import seq2seq
 
 from rare.utils import shape_utils
 
 
-class AttentionPredictor(object):
+class BahdanauAttentionPredictor(object):
+  """Attention decoder based on tf.contrib.seq2seq"""
+
   def __init__(self,
                rnn_cell,
-               num_attention_units,
-               attention_conv_kernel_size,
-               output_embedding=None,
+               num_attention_units=None,
                max_num_steps=None,
                is_training=True):
     self._rnn_cell = rnn_cell
     self._num_attention_units = num_attention_units
-    self._attention_conv_kernel_size = attention_conv_kernel_size
     self._max_num_steps = max_num_steps
-    self._output_embedding = output_embedding
     self._is_training = is_training
 
   def predict(self,
               feature_map,
-              num_steps,
-              num_classes=None,
               decoder_inputs=None,
+              decoder_inputs_lengths=None,
+              num_classes=None,
+              go_label=None,
+              eos_label=None,
               scope=None):
-    """Decode sequence output.
-    Args:
-      feature_map: a float32 tensor of shape [batch_size, height, width, depth]
-      num_steps: a int32 scalar tensor indicating the number of decoding steps
-      decoder_inputs: an int tensor of shape [batch_size, num_steps].
-                      Should be groundtruth labels with GO padded to the front.
-    """
-    if not self._is_training:
-      raise NotImplementedError('')
-    if isinstance(feature_map, list):
-      feature_map = feature_map[-1]
-    
-    with tf.variable_scope(scope, 'Decode',
-                           [feature_map, num_steps, decoder_inputs]):
-      batch_size = shape_utils.combined_static_and_dynamic_shape(feature_map)[0]
-      if batch_size is None:
-        raise ValueError('batch_size must be static')
+    with tf.variable_scope(scope, 'Predict', [feature_map]):
+      batch_size, _, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
+      if batch_size is None or map_depth is None:
+        raise ValueError('batch_size and map_depth must be static')
 
-      # project feature map to vh
-      vh = conv2d(
-        feature_map,
+      embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
+
+      memory = tf.reshape(feature_map, [batch_size, -1, map_depth])
+      attention_mechanism = seq2seq.BahdanauAttention(
         self._num_attention_units,
-        kernel_size=1,
-        stride=1,
-        biases_initializer=None,
-        scope='Conv_vh'
-      ) # => [batch_size, map_height, map_width, num_attention_units]
-
-      initial_state = self._rnn_cell.zero_state(batch_size, tf.float32)
-      initial_alignment = tf.expand_dims(
-        tf.zeros(tf.shape(feature_map)[:3],
-                 dtype=tf.float32),
-        axis=3
+        memory,
+        memory_sequence_length=None, # all full lenghts
       )
-      rnn_outputs_list = []
-      last_state = initial_state
-      last_alignment = initial_alignment
-      with tf.variable_scope('DecodeSteps'):
-        for i in range(self._max_num_steps):
-          if i > 0: tf.get_variable_scope().reuse_variables()
+      attention_cell = seq2seq.AttentionWrapper(
+        self._rnn_cell,
+        attention_mechanism)
 
-          with tf.name_scope('Step_{}'.format(i)):
-            is_in_range = tf.less(i, num_steps)
-            decoder_input_i = tf.cond(
-              is_in_range,
-              true_fn=(lambda:
-                self._output_embedding.embed(
-                  tf.squeeze(tf.slice(decoder_inputs, [0, i], [-1, 1]), axis=1),
-                  num_classes)
-              ),
-              false_fn=lambda: tf.zeros([batch_size, num_classes], tf.float32)
-            )
-            output_candidate, new_state, alignment = \
-              self._predict_step(vh, last_state, last_alignment, decoder_input_i)
-            output = tf.cond(
-              is_in_range,
-              true_fn=lambda: output_candidate,
-              false_fn=lambda: tf.zeros([batch_size, self._rnn_cell.output_size],
-                                        dtype=tf.float32)
-            )
+      if self._is_training:
+        helper = seq2seq.TrainingHelper(
+          embedding_fn(decoder_inputs),
+          sequence_length=decoder_inputs_lengths,
+          time_major=False)
+      else:
+        helper = seq2seq.GreedyEmbeddingHelper(
+          embedding=embedding_fn,
+          start_tokens=tf.tile([go_label], [batch_size]),
+          end_token=eos_label)
 
-          rnn_outputs_list.append(output)
-          last_state = new_state
-          last_alignment = alignment
+      attention_decoder = seq2seq.BasicDecoder(
+        cell=attention_cell,
+        helper=helper,
+        initial_state=attention_cell.zero_state(batch_size, tf.float32),
+        output_layer=tf.layers.Dense(num_classes))
+      outputs, _, output_lengths = seq2seq.dynamic_decode(
+        decoder=attention_decoder,
+        output_time_major=False,
+        impute_finished=True,
+        maximum_iterations=self._max_num_steps)
 
-      rnn_outputs = tf.stack(rnn_outputs_list, axis=1)
-      rnn_outputs = rnn_outputs[:,:num_steps,:]  # => [batch_size, num_steps, output_dims]
-
-      logits = fully_connected(
-        rnn_outputs,
-        num_classes,
-        activation_fn=None,
-        scope='FullyConnected_logits'
-      ) # => [batch_size, num_steps, num_classes]
-    return logits
-
-  def _predict_step(self, feature_map_proj, last_state, last_attention, decoder_input):
-    """
-    Args:
-      feature_map_proj: a float32 tensor with shape [batch_size, map_height, map_width, num_attention_units]
-      last_state: a float32 tensor with shape [batch_size, ]
-      last_attention: a float32 tensor with shape [batch_size, map_height, map_width, depth]
-      decoder_input: a float32 tensor with shape [batch_size, decoder_input_size]
-    """
-    batch_size, map_height, map_width, map_depth = (
-      shape_utils.combined_static_and_dynamic_shape(feature_map_proj)
-    )
-    if batch_size is None or map_depth is None:
-      raise ValueError('batch_size and map_depth must be static')
-    if map_depth != self._num_attention_units:
-      raise ValueError('map_depth must be equal to self._num_attention_units')
-
-    last_attention_conv = conv2d(
-      last_attention,
-      self._num_attention_units,
-      kernel_size=self._attention_conv_kernel_size,
-      stride=1,
-      biases_initializer=None,
-      scope='Conv_attention'
-    ) # => [batch_size, map_height, map_width, num_attention_units]
-    ws = tf.reshape(
-      fully_connected(
-        last_state,
-        self._num_attention_units,
-        activation_fn=None,
-        biases_initializer=tf.zeros_initializer(),
-        scope='FullyConnected_state'
-      ),
-      [batch_size, 1, 1, self._num_attention_units]
-    ) # => [batch_size, 1, 1, num_attention_units], bias is added
-    attention_sum = tf.add(
-      tf.add(feature_map_proj, last_attention_conv),
-      ws
-    ) # => [batch_size, map_height, map_width, num_attention_units]
-    attention_scores = conv2d(
-      tf.tanh(attention_sum),
-      1,
-      kernel_size=1,
-      activation_fn=None,
-      biases_initializer=None,
-      scope='Conv_scores'
-    ) # => [batch_size, map_height, map_width, 1]
-    attention_scores_flat = tf.reshape(
-      tf.squeeze(attention_scores, axis=3),
-      [batch_size, -1, 1]
-    ) # => [batch_size, map_height * map_width, 1]
-    alignment_flat = tf.nn.softmax(
-      attention_scores_flat, dim=1
-    ) # => [batch_size, map_height * map_width, 1]
-    alignment = tf.reshape(
-      alignment_flat,
-      [batch_size, map_height, map_width, 1]
-    )
-    feature_flat = tf.reshape(
-      feature_map_proj,
-      [batch_size, map_width * map_height, map_depth]
-    ) # => [batch_size, map_height * map_width, map_depth]
-    glimpse = tf.squeeze(
-      tf.matmul(feature_flat, alignment_flat, transpose_a=True),
-      axis=2
-    ) # [batch_size, map_depth]
-
-    rnn_input = tf.concat([glimpse, decoder_input], axis=1)
-    output, new_state = self._rnn_cell(rnn_input, last_state)
-    return output, new_state, alignment
+    output_logits = outputs.rnn_output
+    output_labels = outputs.sample_id
+    return output_logits, output_labels, output_lengths

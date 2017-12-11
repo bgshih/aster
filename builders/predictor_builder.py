@@ -3,27 +3,24 @@ import tensorflow as tf
 from rare.predictors import attention_predictor
 from rare.protos import predictor_pb2
 from rare.builders import rnn_cell_builder
-from rare.builders import embedding_builder
+
 
 def build(config, is_training):
   if not isinstance(config, predictor_pb2.Predictor):
     raise ValueError('config not of type predictor_pb2.predictor')
   predictor_oneof = config.WhichOneof('predictor_oneof')
 
-  if predictor_oneof == 'attention_predictor':
-    attention_predictor_config = config.attention_predictor
+  if predictor_oneof == 'bahdanau_attention_predictor':
+    predictor_config = config.bahdanau_attention_predictor
 
-    rnn_cell_object = rnn_cell_builder.build(attention_predictor_config.rnn_cell)
-    embedding_object = embedding_builder.build(attention_predictor_config.output_embedding)
-    attention_predictor_object = attention_predictor.AttentionPredictor(
+    rnn_cell_object = rnn_cell_builder.build(predictor_config.rnn_cell)
+    predictor_object = attention_predictor.BahdanauAttentionPredictor(
       rnn_cell=rnn_cell_object,
-      num_attention_units=attention_predictor_config.num_attention_units,
-      attention_conv_kernel_size=attention_predictor_config.attention_conv_kernel_size,
-      output_embedding=embedding_object,
-      max_num_steps=attention_predictor_config.max_num_steps,
+      num_attention_units=predictor_config.num_attention_units,
+      max_num_steps=predictor_config.max_num_steps,
       is_training=is_training
     )
-    return attention_predictor_object
+    return predictor_object
 
   else:
     raise ValueError('Unknown predictor_oneof: {}'.format(predictor_oneof))
