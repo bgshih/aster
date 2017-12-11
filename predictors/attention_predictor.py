@@ -27,6 +27,10 @@ class BahdanauAttentionPredictor(object):
               go_label=None,
               eos_label=None,
               scope=None):
+
+    if isinstance(feature_map, list):
+      feature_map = feature_map[-1]
+
     with tf.variable_scope(scope, 'Predict', [feature_map]):
       batch_size, _, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
       if batch_size is None or map_depth is None:

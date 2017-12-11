@@ -30,8 +30,12 @@ class SequenceCrossEntropyLoss(object):
     ) # => [batch_size, max_time]
     row_losses = tf.reduce_sum(masked_losses, 1)
     if self._sequence_normalize:
-      row_losses = tf.truediv(row_losses, tf.cast(lengths, tf.float32))
+      row_losses = tf.truediv(
+        row_losses,
+        tf.cast(tf.maximum(lengths, 1), tf.float32))
     loss = tf.reduce_sum(row_losses)
     if self._sample_normalize:
-      loss = tf.truediv(loss, tf.cast(batch_size, tf.float32))
+      loss = tf.truediv(
+        loss,
+        tf.cast(tf.maximum(batch_size, 1), tf.float32))
     return loss

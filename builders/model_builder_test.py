@@ -16,18 +16,13 @@ class ModelBuilderTest(tf.test.TestCase):
       }
 
       predictor {
-        attention_predictor {
+        bahdanau_attention_predictor {
           rnn_cell {
             gru_cell {
               num_units: 512
             }
           }
           num_attention_units: 128
-          attention_conv_kernel_size: 5
-          output_embedding {
-            one_hot_embedding {
-            }
-          }
           max_num_steps: 10
         }
       }

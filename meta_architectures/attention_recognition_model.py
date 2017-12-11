@@ -39,45 +39,35 @@ class AttentionRecognitionModel(object):
       feature_maps = self._feature_extractor.extract_features(preprocessed_images, scope=scope)
 
     with tf.variable_scope('Predictor') as scope:
-      num_decode_steps = tf.reduce_max(
-        self._groundtruth_dict['text_lengths']) + 1
-      logits = self._predictor.predict(
+      logits, labels, lengths = self._predictor.predict(
           feature_maps,
-          num_decode_steps,
+          decoder_inputs=self._groundtruth_dict['text_labels'],
+          decoder_inputs_lengths=self._groundtruth_dict['text_lengths'],
           num_classes=self.num_classes,
-          decoder_inputs=self._groundtruth_dict['decoder_inputs'],
+          go_label=self._label_map.go_label,
+          eos_label=self._label_map.eos_label,
           scope=scope)
 
     predictions_dict = {
-      'logits': logits
+      'logits': logits,
+      'labels': labels,
+      'lengths': lengths
     }
     return predictions_dict
 
   def loss(self, predictions_dict):
     loss = self._loss(
       predictions_dict['logits'],
-      self._groundtruth_dict['prediction_target'],
-      self._groundtruth_dict['text_lengths'] + 1
+      self._groundtruth_dict['text_labels'],
+      self._groundtruth_dict['text_lengths']
     )
     return {'RecognitionLoss': loss}
 
   def provide_groundtruth(self, groundtruth_text_list):
-    batch_size = len(groundtruth_text_list)
     groundtruth_text = tf.stack(groundtruth_text_list, axis=0)
     groundtruth_labels, text_lengths = self._label_map.text_to_labels(
       groundtruth_text,
       pad_value=self._label_map.eos_label,
       return_lengths=True)
-    go_labels = tf.fill(
-      [batch_size, 1],
-      tf.constant(self._label_map.go_label, dtype=tf.int64))
-    eos_labels = tf.fill(
-      [batch_size, 1],
-      tf.constant(self._label_map.eos_label, dtype=tf.int64))
-    decoder_inputs = tf.concat([go_labels, groundtruth_labels], axis=1)
-    prediction_target = tf.concat([groundtruth_labels, eos_labels], axis=1)
-
     self._groundtruth_dict['text_labels'] = groundtruth_labels
-    self._groundtruth_dict['decoder_inputs'] = decoder_inputs
-    self._groundtruth_dict['prediction_target'] = prediction_target
     self._groundtruth_dict['text_lengths'] = text_lengths
