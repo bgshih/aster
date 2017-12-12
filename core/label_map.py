@@ -2,6 +2,8 @@ import string
 
 import tensorflow as tf
 
+from rare.utils import shape_utils
+
 
 class LabelMap(object):
 
@@ -84,7 +86,7 @@ class LabelMap(object):
       text: ascii encoded string tensor with shape [batch_size]
       pad_value: Value used to pad labels to the same length.
                  By default it is eos_label.
-      return_lengths: if True, also return text lenghts
+      return_lengths: if True, also return text lengths
     Returns:
       labels_padded: labels padded with eos symbols
     """
@@ -111,13 +113,27 @@ class LabelMap(object):
     else:
       return labels_dense
 
-  def labels_to_text(self, labels):
+  def labels_to_text(self, labels, lengths):
     """Convert labels to text strings.
     Args:
       labels: int64 tensor with shape [batch_size, max_label_length]
     Returns:
       text: string tensor with shape [batch_size]
     """
-    chars = self._label_to_char_table.lookup(labels)
+    if labels.dtype == tf.int32 or labels.dtype == tf.int64:
+      labels = tf.cast(labels, tf.int64)
+    else:
+      raise ValueError('Wrong dtype of labels: {}'.format(labels.dtype))
+
+    batch_size, max_label_length = shape_utils.combined_static_and_dynamic_shape(labels)
+    mask = tf.less(
+      tf.tile([tf.range(max_label_length)], [batch_size, 1]),
+      tf.expand_dims(lengths, 1)
+    )
+    eos_masked_labels = tf.add(
+      tf.multiply(labels, tf.cast(mask, tf.int64)),
+      tf.multiply(labels, tf.cast(tf.logical_not(mask), tf.int64)) * self.eos_label)
+
+    chars = self._label_to_char_table.lookup(eos_masked_labels)
     text = tf.reduce_join(chars, axis=1)
     return text

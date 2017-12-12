@@ -1,7 +1,7 @@
 syntax = "proto2";
 package rare.protos;
 
-// import "rare/protos/eval.proto";
+import "rare/protos/eval.proto";
 import "rare/protos/input_reader.proto";
 import "rare/protos/model.proto";
 import "rare/protos/train.proto";
@@ -12,6 +12,6 @@ message TrainEvalPipelineConfig {
   optional RecognitionModel model = 1;
   optional TrainConfig train_config = 2;
   optional InputReader train_input_reader = 3;
-  // optional EvalConfig eval_config = 4;
-  // optional InputReader eval_input_reader = 5;
+  optional EvalConfig eval_config = 4;
+  optional InputReader eval_input_reader = 5;
 }

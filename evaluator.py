@@ -10,7 +10,7 @@ from rare import eval_util
 
 
 EVAL_METRICS_FN_DICT = {
-  'main': eval_util.evaluate_recognition_results,
+  'recognition_metrics': eval_util.evaluate_recognition_results,
 }
 
 
@@ -37,14 +37,13 @@ def _extract_prediction_tensors(model,
               tf.expand_dims(preprocessed_image, 0))))
   recognitions = model.postprocess(predictions_dict)
 
-  recognition_text = recognitions['text']
-
   tensor_dict = {
       'original_image': original_image,
       'original_image_shape': original_image_shape,
       'preprocessed_image_shape': preprocessed_image_shape,
       'filename': preprocessed_input_dict[fields.InputDataFields.filename],
-      'recognition_text': recognition_text
+      'groundtruth_text': input_dict[fields.InputDataFields.groundtruth_text],
+      'recognition_text': recognitions['text']
   }
   return tensor_dict
 

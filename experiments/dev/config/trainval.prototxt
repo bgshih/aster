@@ -36,10 +36,10 @@ model {
 train_config {
   batch_size: 128
   optimizer {
-    adam_optimizer: {
+    adam_optimizer {
       learning_rate {
         manual_step_learning_rate {
-          initial_learning_rate: 1e-3
+          initial_learning_rate: 1e-2
           schedule {
             step: 60000
             learning_rate: 1e-4
@@ -70,5 +70,28 @@ train_config {
 train_input_reader {
   tf_record_input_reader {
     input_path: "data/synth90k_all.tfrecord"
+  }
+}
+
+eval_config: {
+  metrics_set: "recognition_metrics"
+  num_examples: 500
+  data_preprocessing_steps {
+    resize_image {
+      target_width: 128
+      target_height: 32
+    }
+  }
+  num_visualizations: 0
+  visualization_export_dir: ""
+}
+
+eval_input_reader: {
+  num_epochs: 1
+  num_readers: 1
+  shuffle: false
+
+  tf_record_input_reader {
+    input_path: "data/synth90k_10k.tfrecord"
   }
 }

@@ -23,7 +23,7 @@ class LabelMapBuilderTest(tf.test.TestCase):
       tf.string
     )
     test_labels, text_lengths = label_map_object.text_to_labels(test_text, return_lengths=True)
-    test_text_from_labels = label_map_object.labels_to_text(test_labels)
+    test_text_from_labels = label_map_object.labels_to_text(test_labels, text_lengths)
 
     with self.test_session() as sess:
       tf.tables_initializer().run()

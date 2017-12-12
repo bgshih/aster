@@ -33,6 +33,7 @@ def _build_attention_recognition_model(model_config, is_training):
     feature_extractor=feature_extractor_object,
     predictor=predictor_object,
     label_map=label_map_object,
-    loss=loss_object
+    loss=loss_object,
+    is_training=is_training
   )
   return model_object
