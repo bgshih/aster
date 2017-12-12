@@ -41,7 +41,7 @@ class AttentionRecognitionModel(object):
     with tf.variable_scope('Predictor') as scope:
       logits, labels, lengths = self._predictor.predict(
           feature_maps,
-          decoder_inputs=self._groundtruth_dict['text_labels'],
+          decoder_inputs=self._groundtruth_dict['decoder_inputs'],
           decoder_inputs_lengths=self._groundtruth_dict['text_lengths'],
           num_classes=self.num_classes,
           go_label=self._label_map.go_label,
@@ -63,11 +63,20 @@ class AttentionRecognitionModel(object):
     )
     return {'RecognitionLoss': loss}
 
+  def post_process(self, predictions_dict):
+    raise NotImplementedError
+
   def provide_groundtruth(self, groundtruth_text_list):
+    batch_size = len(groundtruth_text_list)
     groundtruth_text = tf.stack(groundtruth_text_list, axis=0)
     groundtruth_labels, text_lengths = self._label_map.text_to_labels(
       groundtruth_text,
       pad_value=self._label_map.eos_label,
       return_lengths=True)
+    go_labels = tf.fill([batch_size, 1], tf.constant(self._label_map.go_label, tf.int64))
+    decoder_inputs = tf.concat(
+      [go_labels, groundtruth_labels[:, :-1]],
+      axis=1)
     self._groundtruth_dict['text_labels'] = groundtruth_labels
     self._groundtruth_dict['text_lengths'] = text_lengths
+    self._groundtruth_dict['decoder_inputs'] = decoder_inputs

@@ -20,7 +20,17 @@ REGISTER_OP("StringFiltering")
   .Input("input_string: string")
   .Output("output_string: string")
   .Attr("lower_case: bool = False")
-  .Attr("include_charset: string");
+  .Attr("include_charset: string")
+  .SetShapeFn([](shape_inference::InferenceContext* c) {
+    using namespace shape_inference;
+
+    ShapeHandle input_string = c->input(0);
+    TF_RETURN_IF_ERROR(c->WithRank(input_string, 1, &input_string));
+    DimensionHandle num_strings = c->Dim(input_string, 0);
+
+    c->set_output(0, c->MakeShape({num_strings}));
+    return Status::OK();
+  });
 
 
 class StringFilteringOp : public OpKernel {

@@ -27,7 +27,6 @@ class BahdanauAttentionPredictor(object):
               go_label=None,
               eos_label=None,
               scope=None):
-
     if isinstance(feature_map, list):
       feature_map = feature_map[-1]
 
