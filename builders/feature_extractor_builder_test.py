@@ -9,11 +9,25 @@ class FeatureExtractorBuilderTest(tf.test.TestCase):
   def test_baseline_feature_extractor(self):
     feature_extractor_text_proto = """
     baseline_feature_extractor {
+      conv_hyperparams {
+        op: CONV
+        regularizer {
+          l2_regularizer {
+            weight: 1e-4
+          }
+        }
+        initializer {
+          variance_scaling_initializer {
+          }
+        }
+        batch_norm {
+        }
+      }
     }
     """
     feature_extractor_proto = feature_extractor_pb2.FeatureExtractor()
     text_format.Merge(feature_extractor_text_proto, feature_extractor_proto)
-    feature_extractor_object = feature_extractor_builder.build(feature_extractor_proto)
+    feature_extractor_object = feature_extractor_builder.build(feature_extractor_proto, True)
 
     test_image_shape = [2, 32, 128, 3]
     test_input_image = tf.random_uniform(

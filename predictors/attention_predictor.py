@@ -2,6 +2,7 @@ import functools
 
 import tensorflow as tf
 from tensorflow.contrib import seq2seq
+from tensorflow.contrib.layers import conv2d
 
 from rare.utils import shape_utils
 
@@ -37,7 +38,13 @@ class BahdanauAttentionPredictor(object):
 
       embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
 
-      memory = tf.reshape(feature_map, [batch_size, -1, map_depth])
+      memory = conv2d(feature_map,
+                      self._num_attention_units,
+                      kernel_size=1,
+                      stride=1,
+                      scope='MemoryConv')
+      memory = tf.reshape(feature_map, [batch_size, -1, self._num_attention_units])
+      
       attention_mechanism = seq2seq.BahdanauAttention(
         self._num_attention_units,
         memory,

@@ -43,7 +43,7 @@ def _extract_prediction_tensors(model,
       'preprocessed_image_shape': preprocessed_image_shape,
       'filename': preprocessed_input_dict[fields.InputDataFields.filename],
       'groundtruth_text': input_dict[fields.InputDataFields.groundtruth_text],
-      'recognition_text': recognitions['text']
+      'recognition_text': recognitions['text'][0]
   }
   return tensor_dict
 
@@ -78,9 +78,7 @@ def evaluate(create_input_dict_fn, create_model_fn, eval_config,
     if batch_index < eval_config.num_visualizations:
       raise NotImplementedError
 
-      tag = 'image-{}'.format(batch_index)
-
-      eval_util.visualize_detection_results(
+      eval_util.print_recognition_results(
           result_dict,
           tag,
           global_step,

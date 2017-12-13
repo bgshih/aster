@@ -1,6 +1,8 @@
 syntax = "proto2";
 package rare.protos;
 
+import "rare/protos/hyperparams.proto";
+
 message FeatureExtractor {
   oneof feature_extractor_oneof {
     BaselineFeatureExtractor baseline_feature_extractor = 1;
@@ -8,4 +10,6 @@ message FeatureExtractor {
 }
 
 message BaselineFeatureExtractor {
+  optional Hyperparams conv_hyperparams = 1;
+  optional bool summarize_inputs = 2 [default=false];
 }

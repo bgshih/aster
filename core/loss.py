@@ -4,7 +4,7 @@ from rare.utils import shape_utils
 
 
 class SequenceCrossEntropyLoss(object):
-  def __init__(self, sequence_normalize=True, sample_normalize=True):
+  def __init__(self, sequence_normalize=False, sample_normalize=True):
     self._sequence_normalize = sequence_normalize
     self._sample_normalize = sample_normalize
 

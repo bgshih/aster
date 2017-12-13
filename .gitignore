@@ -105,3 +105,4 @@ ENV/
 
 # experiments logs
 log*/
+eval*/

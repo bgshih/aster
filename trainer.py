@@ -59,6 +59,7 @@ def _create_losses(input_queue, create_model_fn):
   for loss_tensor in losses_dict.values():
     tf.losses.add_loss(loss_tensor)
 
+
 def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
           num_clones, worker_replicas, clone_on_cpu, ps_tasks, worker_job_name,
           is_chief, train_dir):
@@ -161,7 +162,7 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
 
       # Optionally multiply bias gradients by train_config.bias_grad_multiplier.
       if train_config.bias_grad_multiplier:
-        biases_regex_list = ['.*/biases']
+        biases_regex_list = [r'.*bias(?:es)?', r'.*beta']
         grads_and_vars = variables_helper.multiply_gradients_matching_regex(
           grads_and_vars,
           biases_regex_list,
