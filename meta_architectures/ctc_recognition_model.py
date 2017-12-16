@@ -78,11 +78,12 @@ class CtcRecognitionModel(object):
     logits = predictions_dict['logits']
     batch_size, max_time, _ = shape_utils.combined_static_and_dynamic_shape(logits)
     logits_time_major = tf.transpose(logits, [1,0,2])
-    sparse_labels, log_prob = tf.nn.ctc_beam_search_decoder(
+    sparse_labels, log_prob = tf.nn.ctc_greedy_decoder(
       logits_time_major,
       tf.fill([batch_size], max_time),
-      beam_width=10,
-      top_paths=1,
+      #beam_width=10,
+      #top_paths=1,
+      merge_repeated=True
     )
     labels = tf.sparse_tensor_to_dense(sparse_labels[0], default_value=-1)
     text = self._label_map.labels_to_text(labels)
