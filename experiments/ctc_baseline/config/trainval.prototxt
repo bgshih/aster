@@ -1,5 +1,5 @@
 model {
-  attention_recognition_model {
+  ctc_recognition_model {
     feature_extractor {
       baseline_feature_extractor {
         conv_hyperparams {
@@ -20,15 +20,15 @@ model {
       }
     }
 
-    predictor {
-      bahdanau_attention_predictor {
-        rnn_cell {
-          gru_cell {
-            num_units: 256
-          }
-        }
-        num_attention_units: 256
-        max_num_steps: 40
+    bidirectional_rnn_cell {
+      gru_cell {
+        num_units: 256
+      }
+    }
+
+    bidirectional_rnn_cell {
+      gru_cell {
+        num_units: 256
       }
     }
 
@@ -37,13 +37,7 @@ model {
         text_string: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         delimiter: ""
       }
-    }
-    
-    loss {
-      sequence_cross_entropy_loss {
-        sequence_normalize: false
-        sample_normalize: true
-      }
+      unk_label: 0
     }
   }
 }
@@ -59,7 +53,7 @@ train_config {
   }
   data_augmentation_options {
     string_filtering {
-      lower_case: false
+      lower_case: true
       include_charset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     }
   }

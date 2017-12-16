@@ -35,17 +35,22 @@ class RecognitionEvaluation(object):
     all_recognition_text_array = np.asarray(self.all_recognition_text)
     all_groundtruth_text_array = np.asarray(self.all_groundtruth_text)
 
-    n_print = 20
+    correct_mask = (
+      np.char.lower(all_recognition_text_array) ==
+      np.char.lower(all_groundtruth_text_array))
+
+    # print incorrect predictions
+    incorrect_recognition_text_array = all_recognition_text_array[np.logical_not(correct_mask)]
+    incorrect_groundtruth_text_array = all_groundtruth_text_array[np.logical_not(correct_mask)]
+
+    n_print = min(20, incorrect_recognition_text_array.shape[0])
     print('*** Groundtruth => Prediction ***')
     for i in range(n_print):
       print('{} => {}'.format(
-        all_groundtruth_text_array[i].decode('utf-8'),
-        all_recognition_text_array[i].decode('utf-8')))
+        incorrect_groundtruth_text_array[i].decode('utf-8'),
+        incorrect_recognition_text_array[i].decode('utf-8')))
     print('**********************************')
 
     # case insensitive accuracy
-    all_recognition_text_array = np.char.lower(all_recognition_text_array)
-    all_groundtruth_text_array = np.char.lower(all_groundtruth_text_array)
-    case_insensitive_accuracy = np.count_nonzero(
-      all_recognition_text_array == all_groundtruth_text_array) / num_samples
+    case_insensitive_accuracy = np.count_nonzero(correct_mask) / num_samples
     return case_insensitive_accuracy

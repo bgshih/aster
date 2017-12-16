@@ -3,6 +3,8 @@ package rare.protos;
 
 message LabelMap {
   optional CharacterSet character_set = 1;
+  optional int64 label_offset = 2 [default=0];
+  optional int64 unk_label = 3;
 }
 
 message CharacterSet {

@@ -37,6 +37,7 @@ model {
         text_string: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         delimiter: ""
       }
+      label_offset: 2
     }
     
     loss {

@@ -17,3 +17,5 @@ class TfExampleFields(object):
   width = 'image/width'
   source_id = 'image/source_id'
   transcript = 'image/transcript'
+  lexicon = 'image/lexicon'
+  lexicon_2 = 'image/lexicon_2'

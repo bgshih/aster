@@ -25,8 +25,8 @@ class BahdanauAttentionPredictor(object):
               decoder_inputs=None,
               decoder_inputs_lengths=None,
               num_classes=None,
-              go_label=None,
-              eos_label=None,
+              start_label=None,
+              end_label=None,
               scope=None):
     if isinstance(feature_map, list):
       feature_map = feature_map[-1]
@@ -62,8 +62,8 @@ class BahdanauAttentionPredictor(object):
       else:
         helper = seq2seq.GreedyEmbeddingHelper(
           embedding=embedding_fn,
-          start_tokens=tf.tile([go_label], [batch_size]),
-          end_token=eos_label)
+          start_tokens=tf.tile([start_label], [batch_size]),
+          end_token=end_label)
 
       attention_decoder = seq2seq.BasicDecoder(
         cell=attention_cell,

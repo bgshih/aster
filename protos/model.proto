@@ -3,6 +3,7 @@ package rare.protos;
 
 import "rare/protos/feature_extractor.proto";
 import "rare/protos/predictor.proto";
+import "rare/protos/rnn_cell.proto";
 import "rare/protos/label_map.proto";
 import "rare/protos/loss.proto";
 
@@ -10,6 +11,7 @@ import "rare/protos/loss.proto";
 message RecognitionModel {
   oneof recognition_model_oneof {
     AttentionRecognitionModel attention_recognition_model = 1;
+    CtcRecognitionModel ctc_recognition_model = 2;
   }
 }
 
@@ -18,4 +20,10 @@ message AttentionRecognitionModel {
   optional Predictor predictor = 2;
   optional LabelMap label_map = 3;
   optional Loss loss = 4;
+}
+
+message CtcRecognitionModel {
+  optional FeatureExtractor feature_extractor = 1;
+  repeated RnnCell bidirectional_rnn_cell = 2;
+  optional LabelMap label_map = 3;
 }

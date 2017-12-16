@@ -19,9 +19,12 @@ class AttentionRecognitionModel(object):
     self._is_training = is_training
     self._groundtruth_dict = {}
 
+    self.start_label = 0
+    self.end_label = 1
+
   @property
   def num_classes(self):
-    return self._label_map.num_classes
+    return self._label_map.num_classes + 2
 
   def preprocess(self, resized_inputs):
     if resized_inputs.dtype is not tf.float32:
@@ -33,7 +36,7 @@ class AttentionRecognitionModel(object):
     Args:
       preprocessed_images: a float tensor with shape [batch_size, image_height, image_width, 3]
     Returns:
-      predictions_dict: a diction of predicted tensors
+      predictions_dict: a dictionary of predicted tensors
     """
     batch_size = shape_utils.combined_static_and_dynamic_shape(preprocessed_images)[0]
 
@@ -49,13 +52,14 @@ class AttentionRecognitionModel(object):
         decoder_inputs_lengths = None
 
       logits, labels, lengths = self._predictor.predict(
-          feature_maps,
-          decoder_inputs=decoder_inputs,
-          decoder_inputs_lengths=decoder_inputs_lengths,
-          num_classes=self.num_classes,
-          go_label=self._label_map.go_label,
-          eos_label=self._label_map.eos_label,
-          scope=scope)
+        feature_maps,
+        decoder_inputs=decoder_inputs,
+        decoder_inputs_lengths=decoder_inputs_lengths,
+        num_classes=self.num_classes,
+        start_label=self.start_label,
+        end_label=self.end_label,
+        scope=scope
+      )
 
     predictions_dict = {
       'logits': logits,
@@ -86,15 +90,15 @@ class AttentionRecognitionModel(object):
     groundtruth_text = tf.stack(groundtruth_text_list, axis=0)
     groundtruth_text_labels, text_lengths = self._label_map.text_to_labels(
       groundtruth_text,
-      pad_value=self._label_map.eos_label,
+      pad_value=self.end_label,
       return_lengths=True)
-    go_labels = tf.fill([batch_size, 1], tf.constant(self._label_map.go_label, tf.int64))
-    eos_labels = tf.fill([batch_size, 1], tf.constant(self._label_map.eos_label, tf.int64))
+    start_labels = tf.fill([batch_size, 1], tf.constant(self.start_label, tf.int64))
+    end_labels = tf.fill([batch_size, 1], tf.constant(self.end_label, tf.int64))
     decoder_inputs = tf.concat(
-      [go_labels, groundtruth_text_labels],
+      [start_labels, groundtruth_text_labels],
       axis=1)
     prediction_labels = tf.concat(
-      [groundtruth_text_labels, eos_labels],
+      [groundtruth_text_labels, end_labels],
       axis=1)
     self._groundtruth_dict['text_labels'] = groundtruth_text_labels
     self._groundtruth_dict['text_lengths'] = text_lengths
