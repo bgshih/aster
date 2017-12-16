@@ -34,7 +34,7 @@ model {
 
     label_map {
       character_set {
-        text_string: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        text_string: "0123456789abcdefghijklmnopqrstuvwxyz"
         delimiter: ""
       }
       unk_label: 0
@@ -48,7 +48,7 @@ train_config {
   data_augmentation_options {
     resize_image_random_method {
       target_height: 32
-      target_width: 128
+      target_width: 100
     }
   }
   data_augmentation_options {
@@ -97,7 +97,7 @@ eval_config: {
   data_preprocessing_steps {
     resize_image {
       target_height: 32
-      target_width: 128
+      target_width: 100
     }
   }
   num_visualizations: 0

@@ -67,30 +67,26 @@ class CtcRecognitionModel(object):
     logits = predictions_dict['logits']
     batch_size, max_time, _ = shape_utils.combined_static_and_dynamic_shape(logits)
 
-    loss = tf.nn.ctc_loss(
+    losses = tf.nn.ctc_loss(
       tf.cast(self._groundtruth_dict['text_labels_sparse'], tf.int32),
       predictions_dict['logits'],
       tf.fill([batch_size], max_time),
       time_major=False)
-    # loss = tf.Print(
-    #   loss,
-    #   [tf.sparse_tensor_to_dense(self._groundtruth_dict['text_labels_sparse'], default_value=-1),
-    #    tf.shape(predictions_dict['logits']),
-    #    self._groundtruth_dict['text_lengths']],
-    #   first_n=10,
-    #   summarize=100)
-
+    loss = tf.reduce_mean(losses)
+    
     return {'RecognitionLoss': loss}
 
   def postprocess(self, predictions_dict):
+    logits = predictions_dict['logits']
+    batch_size, max_time, _ = shape_utils.combined_static_and_dynamic_shape(logits)
     logits_time_major = tf.transpose(logits, [1,0,2])
     sparse_labels, log_prob = tf.nn.ctc_beam_search_decoder(
-      predictions_dict['logits'],
-      tf.fill([batch_size], tf.shape(logits_time_major)[0]),
+      logits_time_major,
+      tf.fill([batch_size], max_time),
       beam_width=10,
       top_paths=1,
     )
-    labels = tf.sparse_tensor_to_dense(sparse_labels, default_value=-1)
+    labels = tf.sparse_tensor_to_dense(sparse_labels[0], default_value=-1)
     text = self._label_map.labels_to_text(labels)
     recognitions_dict = {
       'text': text
