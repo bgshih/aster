@@ -48,9 +48,12 @@ def _build_ctc_recognition_model(model_config, is_training):
   )
   label_map_object = label_map_builder.build(model_config.label_map)
 
-  bidirectional_rnn_cells_list = [
-    rnn_cell_builder.build(rnn_cell_config) for rnn_cell_config in model_config.bidirectional_rnn_cell
-  ]
+  bidirectional_rnn_cells_list = []
+  for rnn_cell_config in model_config.bidirectional_rnn_cell:
+    bidirectional_rnn_cells_list.append(
+      (rnn_cell_builder.build(rnn_cell_config),
+       rnn_cell_builder.build(rnn_cell_config))
+    )
 
   model_object = ctc_recognition_model.CtcRecognitionModel(
     feature_extractor=feature_extractor_object,

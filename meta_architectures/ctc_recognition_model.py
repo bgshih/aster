@@ -1,8 +1,6 @@
 import tensorflow as tf
 from tensorflow.contrib.layers import fully_connected
 
-
-
 from rare.core import label_map
 from rare.utils import shape_utils
 
@@ -53,10 +51,10 @@ class CtcRecognitionModel(object):
       # build stacked bidirectional RNNs
       rnn_inputs = feature_sequence
       rnn_outputs = rnn_inputs
-      for i, rnn_cell in enumerate(self._bidirectional_rnn_cell_list):
+      for i, (fw_cell, bw_cell) in enumerate(self._bidirectional_rnn_cell_list):
         with tf.variable_scope('BidirectionalRnn_{}'.format(i)):
           (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
-            rnn_cell, rnn_cell, rnn_inputs, time_major=False, dtype=tf.float32)
+            fw_cell, bw_cell, rnn_inputs, time_major=False, dtype=tf.float32)
           rnn_outputs = tf.concat([output_fw, output_bw], axis=2)
           rnn_inputs = rnn_outputs
 
