@@ -64,7 +64,7 @@ train_config {
     adadelta_optimizer {
       learning_rate {
         constant_learning_rate {
-          learning_rate: 1e-3
+          learning_rate: 1e-1
         }
       }
     }
