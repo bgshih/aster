@@ -43,7 +43,7 @@ class BahdanauAttentionPredictor(object):
                       kernel_size=1,
                       stride=1,
                       scope='MemoryConv')
-      memory = tf.reshape(feature_map, [batch_size, -1, self._num_attention_units])
+      memory = tf.reshape(memory, [batch_size, -1, self._num_attention_units])
       
       attention_mechanism = seq2seq.BahdanauAttention(
         self._num_attention_units,
