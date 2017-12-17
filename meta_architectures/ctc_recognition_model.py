@@ -81,8 +81,6 @@ class CtcRecognitionModel(object):
     sparse_labels, log_prob = tf.nn.ctc_greedy_decoder(
       logits_time_major,
       tf.fill([batch_size], max_time),
-      #beam_width=10,
-      #top_paths=1,
       merge_repeated=True
     )
     labels = tf.sparse_tensor_to_dense(sparse_labels[0], default_value=-1)

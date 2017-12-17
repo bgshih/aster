@@ -1,5 +1,5 @@
 model {
-  ctc_recognition_model {
+  attention_recognition_model {
     feature_extractor {
       baseline_feature_extractor {
         conv_hyperparams {
@@ -32,12 +32,31 @@ model {
       }
     }
 
+    predictor {
+      bahdanau_attention_predictor {
+        rnn_cell {
+          gru_cell {
+            num_units: 256
+          }
+        }
+        num_attention_units: 256
+        max_num_steps: 40
+      }
+    }
+
     label_map {
       character_set {
-        text_string: "0123456789abcdefghijklmnopqrstuvwxyz"
+        text_string: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         delimiter: ""
       }
-      unk_label: 0
+      label_offset: 2
+    }
+    
+    loss {
+      sequence_cross_entropy_loss {
+        sequence_normalize: false
+        sample_normalize: true
+      }
     }
   }
 }
@@ -53,7 +72,7 @@ train_config {
   }
   data_augmentation_options {
     string_filtering {
-      lower_case: true
+      lower_case: false
       include_charset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     }
   }
@@ -90,7 +109,7 @@ train_input_reader {
   }
 }
 
-eval_config: {
+eval_config {
   metrics_set: "recognition_metrics"
   num_examples: 3000
   data_preprocessing_steps {
@@ -103,7 +122,7 @@ eval_config: {
   visualization_export_dir: ""
 }
 
-eval_input_reader: {
+eval_input_reader {
   num_epochs: 1
   num_readers: 1
   shuffle: false

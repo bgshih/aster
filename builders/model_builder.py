@@ -28,12 +28,19 @@ def _build_attention_recognition_model(model_config, is_training):
     model_config.feature_extractor,
     is_training=is_training
   )
+  bidirectional_rnn_cells_list = []
+  for rnn_cell_config in model_config.bidirectional_rnn_cell:
+    bidirectional_rnn_cells_list.append(
+      (rnn_cell_builder.build(rnn_cell_config),
+       rnn_cell_builder.build(rnn_cell_config))
+    )
   predictor_object = predictor_builder.build(model_config.predictor, is_training=is_training)
   label_map_object = label_map_builder.build(model_config.label_map)
   loss_object = loss_builder.build(model_config.loss)
 
   model_object = attention_recognition_model.AttentionRecognitionModel(
     feature_extractor=feature_extractor_object,
+    birnn_cells_list=bidirectional_rnn_cells_list,
     predictor=predictor_object,
     label_map=label_map_object,
     loss=loss_object,

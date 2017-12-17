@@ -30,6 +30,18 @@ class ModelBuilderTest(tf.test.TestCase):
         }
       }
 
+      bidirectional_rnn_cell {
+        gru_cell {
+          num_units: 256
+        }
+      }
+
+      bidirectional_rnn_cell {
+        gru_cell {
+          num_units: 256
+        }
+      }
+
       predictor {
         bahdanau_attention_predictor {
           rnn_cell {

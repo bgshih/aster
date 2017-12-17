@@ -8,11 +8,13 @@ class AttentionRecognitionModel(object):
 
   def __init__(self,
                feature_extractor=None,
+               birnn_cells_list=[],
                predictor=None,
                label_map=None,
                loss=None,
                is_training=True):
     self._feature_extractor = feature_extractor
+    self._birnn_cells_list = birnn_cells_list
     self._predictor = predictor
     self._label_map = label_map
     self._loss = loss
@@ -42,6 +44,19 @@ class AttentionRecognitionModel(object):
 
     with tf.variable_scope('FeatureExtractor') as scope:
       feature_maps = self._feature_extractor.extract_features(preprocessed_images, scope=scope)
+
+      if len(self._birnn_cells_list) > 0:
+        feature_map = feature_maps[0]
+        batch_size, _, _, depth = shape_utils.combined_static_and_dynamic_shape(feature_map)  
+        rnn_inputs = tf.reshape(feature_map, [batch_size, -1, depth])
+        rnn_outputs = rnn_inputs
+        for i, (fw_cell, bw_cell) in enumerate(self._birnn_cells_list):
+          with tf.variable_scope('BidirectionalRnn_{}'.format(i)):
+            (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
+              fw_cell, bw_cell, rnn_inputs, time_major=False, dtype=tf.float32)
+            rnn_outputs = tf.concat([output_fw, output_bw], axis=2)
+            rnn_inputs = rnn_outputs
+        feature_maps = [tf.reshape(rnn_outputs, [batch_size, 1, -1, rnn_outputs.get_shape()[2].value])]
 
     with tf.variable_scope('Predictor') as scope:
       if self._is_training:

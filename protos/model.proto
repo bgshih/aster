@@ -17,9 +17,10 @@ message RecognitionModel {
 
 message AttentionRecognitionModel {
   optional FeatureExtractor feature_extractor = 1;
-  optional Predictor predictor = 2;
-  optional LabelMap label_map = 3;
-  optional Loss loss = 4;
+  repeated RnnCell bidirectional_rnn_cell = 2;
+  optional Predictor predictor = 3;
+  optional LabelMap label_map = 4;
+  optional Loss loss = 5;
 }
 
 message CtcRecognitionModel {
