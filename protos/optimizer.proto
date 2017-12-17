@@ -10,9 +10,10 @@ message Optimizer {
     RMSPropOptimizer rms_prop_optimizer = 1;
     MomentumOptimizer momentum_optimizer = 2;
     AdamOptimizer adam_optimizer = 3;
+    AdadeltaOptimizer adadelta_optimizer = 5;
   }
-  optional bool use_moving_average = 4 [default=true];
-  optional float moving_average_decay = 5 [default=0.9999];
+  optional bool use_moving_average = 6 [default=true];
+  optional float moving_average_decay = 7 [default=0.9999];
 }
 
 // Configuration message for the RMSPropOptimizer
@@ -35,6 +36,11 @@ message MomentumOptimizer {
 // See: https://www.tensorflow.org/api_docs/python/tf/train/AdamOptimizer
 message AdamOptimizer {
   optional LearningRate learning_rate = 1;
+}
+
+message AdadeltaOptimizer {
+  optional LearningRate learning_rate = 1;
+  optional float rho = 2 [default=0.95];
 }
 
 // Configuration message for optimizer learning rate.

@@ -39,6 +39,12 @@ def build(optimizer_config, global_summaries):
     optimizer = tf.train.AdamOptimizer(
         _create_learning_rate(config.learning_rate, global_summaries))
 
+  if optimizer_type == 'adadelta_optimizer':
+    config = optimizer_config.adadelta_optimizer
+    optimizer = tf.train.AdadeltaOptimizer(
+        learning_rate=_create_learning_rate(config.learning_rate, global_summaries),
+        rho=config.rho)
+
   if optimizer is None:
     raise ValueError('Optimizer %s not supported.' % optimizer_type)
 
