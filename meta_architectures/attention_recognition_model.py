@@ -92,9 +92,7 @@ class AttentionRecognitionModel(object):
     return {'RecognitionLoss': loss}
 
   def postprocess(self, predictions_dict):
-    text = self._label_map.labels_to_text(
-      predictions_dict['labels'],
-      predictions_dict['lengths'])
+    text = self._label_map.labels_to_text(predictions_dict['labels'])
     recognitions_dict = {
       'text': text
     }
