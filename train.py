@@ -74,6 +74,8 @@ flags.DEFINE_integer('worker_replicas', 1, 'Number of worker+trainer '
 flags.DEFINE_integer('ps_tasks', 0,
                      'Number of parameter server tasks. If None, does not use '
                      'a parameter server.')
+flags.DEFINE_string('exp_dir', '',
+                    'Directory containing config, training log and evaluations')
 flags.DEFINE_string('train_dir', '',
                     'Directory to save the checkpoints and training summaries.')
 flags.DEFINE_string('pipeline_config_path', '',
@@ -87,6 +89,17 @@ flags.DEFINE_string('model_config_path', '',
                     'Path to a model_pb2.DetectionModel config file.')
 
 FLAGS = flags.FLAGS
+
+
+def get_configs_from_exp_dir():
+  pipeline_config_path = os.path.join(FLAGS.exp_dir, 'config/trainval.prototxt')
+  pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
+  with tf.gfile.GFile(pipeline_config_path, 'r') as f:
+    text_format.Merge(f.read(), pipeline_config)
+  model_config = pipeline_config.model
+  train_config = pipeline_config.train_config
+  input_config = pipeline_config.train_input_reader
+  return model_config, train_config, input_config
 
 
 def get_configs_from_pipeline_file():
@@ -135,11 +148,16 @@ def get_configs_from_multiple_files():
 
 
 def main(_):
-  assert FLAGS.train_dir, '`train_dir` is missing.'
-  if FLAGS.pipeline_config_path:
-    model_config, train_config, input_config = get_configs_from_pipeline_file()
+  if FLAGS.exp_dir:
+    train_dir = os.path.join(FLAGS.exp_dir, 'log')
+    model_config, train_config, input_config = get_configs_from_exp_dir()
   else:
-    model_config, train_config, input_config = get_configs_from_multiple_files()
+    assert FLAGS.train_dir, '`train_dir` is missing.'
+    train_dir = FLAGS.train_dir
+    if FLAGS.pipeline_config_path:
+      model_config, train_config, input_config = get_configs_from_pipeline_file()
+    else:
+      model_config, train_config, input_config = get_configs_from_multiple_files()
 
   model_fn = functools.partial(
     model_builder.build,
@@ -191,7 +209,7 @@ def main(_):
 
   trainer.train(create_input_dict_fn, model_fn, train_config, master, task,
                 FLAGS.num_clones, worker_replicas, FLAGS.clone_on_cpu, ps_tasks,
-                worker_job_name, is_chief, FLAGS.train_dir)
+                worker_job_name, is_chief, train_dir)
 
 
 if __name__ == '__main__':

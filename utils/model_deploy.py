@@ -231,7 +231,8 @@ def _gather_clone_loss(clone, num_clones, regularization_losses):
       sum_loss = tf.add_n(all_losses)
   # Add the summaries out of the clone device block.
   if clone_loss is not None:
-    tf.summary.scalar(clone.scope + '/clone_loss', clone_loss)
+    clone_loss_name = 'clone_loss' if not clone.scope else clone.scope + '/clone_loss'
+    tf.summary.scalar(clone_loss_name, clone_loss)
   if regularization_loss is not None:
     tf.summary.scalar('regularization_loss', regularization_loss)
   return sum_loss

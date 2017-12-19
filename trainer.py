@@ -99,7 +99,8 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
     with tf.device(deploy_config.variables_device()):
       global_step = tf.train.create_global_step()
 
-    with tf.device(deploy_config.inputs_device()):
+    with tf.device(deploy_config.inputs_device()), \
+         tf.name_scope('Input'):
       input_queue = _create_input_queue(
         train_config.batch_size // num_clones,
         create_tensor_dict_fn,
@@ -121,7 +122,8 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
     # the updates for the batch_norm variables created by model_fn.
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, first_clone_scope)
 
-    with tf.device(deploy_config.optimizer_device()):
+    with tf.device(deploy_config.optimizer_device()), \
+         tf.name_scope('Optimizer'):
       training_optimizer = optimizer_builder.build(
         train_config.optimizer,
         global_summaries
@@ -151,7 +153,8 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
         init_saver.restore(sess, train_config.fine_tune_checkpoint)
       init_fn = initializer_fn
 
-    with tf.device(deploy_config.optimizer_device()):
+    with tf.device(deploy_config.optimizer_device()), \
+         tf.variable_scope('OptimizeClones'):
       total_loss, grads_and_vars = model_deploy.optimize_clones(
         clones,
         training_optimizer,

@@ -1,5 +1,4 @@
 import os
-
 import functools
 import logging
 import tensorflow as tf
@@ -25,6 +24,8 @@ flags.DEFINE_boolean('eval_training_data', False,
 flags.DEFINE_string('checkpoint_dir', '',
                     'Directory containing checkpoints to evaluate, typically '
                     'set to `train_dir` used in the training job.')
+flags.DEFINE_string('exp_dir', '',
+                    'Directory containing config, training log and evaluations')
 flags.DEFINE_string('eval_dir', '',
                     'Directory to write eval summaries to.')
 flags.DEFINE_string('pipeline_config_path', '',
@@ -37,6 +38,23 @@ flags.DEFINE_string('input_config_path', '',
 flags.DEFINE_string('model_config_path', '',
                     'Path to a model_pb2.DetectionModel config file.')
 FLAGS = flags.FLAGS
+
+
+def get_configs_from_exp_dir():
+  pipeline_config_path = os.path.join(FLAGS.exp_dir, 'config/trainval.prototxt')
+
+  pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
+  with tf.gfile.GFile(pipeline_config_path, 'r') as f:
+    text_format.Merge(f.read(), pipeline_config)
+
+  model_config = pipeline_config.model
+  if FLAGS.eval_training_data:
+    eval_config = pipeline_config.train_config
+  else:
+    eval_config = pipeline_config.eval_config
+  input_config = pipeline_config.eval_input_reader
+
+  return model_config, eval_config, input_config
 
 
 def get_configs_from_pipeline_file():
@@ -92,12 +110,19 @@ def get_configs_from_multiple_files():
 
 
 def main(unused_argv):
-  assert FLAGS.checkpoint_dir, '`checkpoint_dir` is missing.'
-  assert FLAGS.eval_dir, '`eval_dir` is missing.'
-  if FLAGS.pipeline_config_path:
-    model_config, eval_config, input_config = get_configs_from_pipeline_file()
+  if FLAGS.exp_dir:
+    checkpoint_dir = os.path.join(FLAGS.exp_dir, 'log')
+    eval_dir = os.path.join(FLAGS.exp_dir, 'eval')
+    model_config, eval_config, input_config = get_configs_from_exp_dir()
   else:
-    model_config, eval_config, input_config = get_configs_from_multiple_files()
+    assert FLAGS.checkpoint_dir, '`checkpoint_dir` is missing.'
+    assert FLAGS.eval_dir, '`eval_dir` is missing.'
+    if FLAGS.pipeline_config_path:
+      model_config, eval_config, input_config = get_configs_from_pipeline_file()
+    else:
+      model_config, eval_config, input_config = get_configs_from_multiple_files()
+    checkpoint_dir = FLAGS.checkpoint_dir
+    eval_dir = FLAGS.eval_dir
 
   model_fn = functools.partial(
       model_builder.build,
@@ -109,7 +134,7 @@ def main(unused_argv):
       input_config)
 
   evaluator.evaluate(create_input_dict_fn, model_fn, eval_config,
-                     FLAGS.checkpoint_dir, FLAGS.eval_dir,
+                     checkpoint_dir, eval_dir,
                      repeat_evaluation=FLAGS.repeat)
 
 if __name__ == '__main__':
