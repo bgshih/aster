@@ -120,14 +120,33 @@ class ModelBuilderTest(tf.test.TestCase):
       }
 
       bidirectional_rnn_cell {
-        gru_cell {
+        lstm_cell {
           num_units: 256
+          initializer {
+            orthogonal_initializer {
+            }
+          }
+          weight_regularizer {
+            l2_regularizer {
+              weight: 1e-4
+            }
+          }
         }
       }
 
       bidirectional_rnn_cell {
-        gru_cell {
+        lstm_cell {
           num_units: 256
+          initializer {
+            orthogonal_initializer {
+              seed: 1
+            }
+          }
+          weight_regularizer {
+            l2_regularizer {
+              weight: 1e-4
+            }
+          }
         }
       }
 

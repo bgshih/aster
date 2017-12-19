@@ -32,8 +32,8 @@ class CtcRecognitionModel(object):
   def preprocess(self, resized_inputs, scope=None):
     if resized_inputs.dtype is not tf.float32:
       raise ValueError('`preprocess` expects a tf.float32 tensor')
-    with tf.variable_scope('ModelPreprocess', scope, [resized_inputs]) as scope:
-      preprocess_inputs = self._feature_extractor.preprocess(resized_inputs, scope=scope)
+    with tf.variable_scope(scope, 'ModelPreprocess', [resized_inputs]) as preprocess_scope:
+      preprocess_inputs = self._feature_extractor.preprocess(resized_inputs, scope=preprocess_scope)
     return preprocess_inputs
 
   def predict(self, preprocessed_inputs, scope=None):
@@ -44,7 +44,7 @@ class CtcRecognitionModel(object):
       predictions_dict: a diction of predicted tensors
     """
     with tf.variable_scope(scope, 'CtcRecognitionModel', [preprocessed_inputs]) as scope:
-      with tf.variable_scope('FeatureExtracotr') as scope:
+      with tf.variable_scope('FeatureExtractor') as scope:
         feature_map = self._feature_extractor.extract_features(
           preprocessed_inputs, scope=scope)[0]
 
@@ -64,6 +64,11 @@ class CtcRecognitionModel(object):
               fw_cell, bw_cell, rnn_inputs, time_major=False, dtype=tf.float32)
             rnn_outputs = tf.concat([output_fw, output_bw], axis=2)
             rnn_inputs = rnn_outputs
+
+            # NOTE: the weights of rnn_cell are instantiated after being called
+            filter_weights = lambda vars : [x for x in vars if x.op.name.endswith('kernel')]
+            tf.contrib.layers.apply_regularization(fw_cell.weight_regularizer, filter_weights(fw_cell.trainable_weights))
+            tf.contrib.layers.apply_regularization(bw_cell.weight_regularizer, filter_weights(bw_cell.trainable_weights))
 
         logits = fully_connected(rnn_outputs, self.num_classes, activation_fn=None)
     return {'logits': logits}

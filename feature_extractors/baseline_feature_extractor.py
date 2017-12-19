@@ -11,8 +11,9 @@ class BaselineFeatureExtractor(object):
     self._conv_hyperparams = conv_hyperparams # FIXME: add it back
     self._summarize_inputs = summarize_inputs
 
-  def preprocess(self, resized_inputs):
-    preprocessed_inputs = (2.0 / 255.0) * resized_inputs - 1.0
+  def preprocess(self, resized_inputs, scope=None):
+    with tf.variable_scope(scope, 'ModelPreprocess', [resized_inputs]):
+      preprocessed_inputs = (2.0 / 255.0) * resized_inputs - 1.0
     return preprocessed_inputs
 
   def extract_features(self, preprocessed_inputs, scope=None):

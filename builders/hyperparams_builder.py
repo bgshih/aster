@@ -145,6 +145,11 @@ def _build_initializer(initializer):
         factor=initializer.variance_scaling_initializer.factor,
         mode=mode,
         uniform=initializer.variance_scaling_initializer.uniform)
+  if initializer_oneof == 'orthogonal_initializer':
+    return tf.orthogonal_initializer(
+      gain=initializer.orthogonal_initializer.gain,
+      seed=initializer.orthogonal_initializer.seed
+    )
   raise ValueError('Unknown initializer function: {}'.format(
       initializer_oneof))
 

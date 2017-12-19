@@ -13,6 +13,16 @@ class RnnCellBuilderTest(tf.test.TestCase):
       num_units: 1024
       use_peepholes: true
       forget_bias: 1.5
+      initializer {
+        orthogonal_initializer {
+          seed: 1
+        }
+      }
+      weight_regularizer {
+        l2_regularizer {
+          weight: 1e-4
+        }
+      }
     }
     """
     rnn_cell_proto = rnn_cell_pb2.RnnCell()

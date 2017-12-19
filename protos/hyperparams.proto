@@ -65,6 +65,7 @@ message Initializer {
   oneof initializer_oneof {
     TruncatedNormalInitializer truncated_normal_initializer = 1;
     VarianceScalingInitializer variance_scaling_initializer = 2;
+    OrthogonalInitializer orthogonal_initializer = 3;
   }
 }
 
@@ -87,6 +88,11 @@ message VarianceScalingInitializer {
     FAN_AVG = 2;
   }
   optional Mode mode = 3 [default = FAN_IN];
+}
+
+message OrthogonalInitializer {
+  optional float gain = 1 [default = 1.0];
+  optional int32 seed = 2;
 }
 
 // Configuration proto for batch norm to apply after convolution op. See

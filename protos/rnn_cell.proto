@@ -1,6 +1,8 @@
 syntax = "proto2";
 package rare.protos;
 
+import "rare/protos/hyperparams.proto";
+
 message RnnCell {
   oneof rnn_cell_oneof {
     LstmCell lstm_cell = 1;
@@ -12,8 +14,12 @@ message LstmCell {
   optional uint32 num_units = 1 [default=128];
   optional bool use_peepholes = 2 [default=false];
   optional float forget_bias = 3 [default=1.0];
+  optional Initializer initializer = 4;
+  optional Regularizer weight_regularizer = 5;
 }
 
 message GruCell {
   optional uint32 num_units = 1 [default=128];
+  optional Initializer initializer = 2;
+  optional Regularizer weight_regularizer = 3;
 }
