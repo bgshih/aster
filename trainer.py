@@ -79,7 +79,6 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
     is_chief: Whether this replica is the chief replica.
     train_dir: Directory to write checkpoints and training summaries to.
   """
-  model = create_model_fn()
   data_augmentation_options = [
     preprocessor_builder.build(step)
     for step in train_config.data_augmentation_options
@@ -194,8 +193,13 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
         train_tensor = tf.identity(total_loss, name='train_op')
 
     # Add summaries.
-    for model_var in tf.contrib.framework.get_model_variables():
-      global_summaries.add(tf.summary.histogram(model_var.op.name, model_var))
+    for (grad, var) in grads_and_vars:
+      var_name = var.op.name
+      grad_name = 'grad/' + var_name
+      global_summaries.add(tf.summary.histogram(grad_name, grad))
+      global_summaries.add(tf.summary.histogram(var_name, var))
+    # for model_var in tf.contrib.framework.get_model_variables():
+    #   global_summaries.add(tf.summary.histogram(model_var.op.name, model_var))
     for loss_tensor in tf.losses.get_losses():
       global_summaries.add(tf.summary.scalar(loss_tensor.op.name, loss_tensor))
     global_summaries.add(

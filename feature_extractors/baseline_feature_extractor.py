@@ -12,7 +12,8 @@ class BaselineFeatureExtractor(object):
     self._summarize_inputs = summarize_inputs
 
   def preprocess(self, resized_inputs):
-    return (2.0 / 255.0) * resized_inputs - 1.0
+    preprocessed_inputs = (2.0 / 255.0) * resized_inputs - 1.0
+    return preprocessed_inputs
 
   def extract_features(self, preprocessed_inputs, scope=None):
     """Extract features
@@ -26,6 +27,9 @@ class BaselineFeatureExtractor(object):
       tf.greater_equal(tf.shape(preprocessed_inputs)[1], 32),
       ['image height must be at least 32.']
     )
+
+    if self._summarize_inputs:
+      tf.summary.histogram('preprocessed_inputs', preprocessed_inputs)
 
     with tf.control_dependencies([shape_assert]), \
          arg_scope(self._conv_hyperparams), \

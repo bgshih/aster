@@ -104,5 +104,6 @@ ENV/
 *_pb2.py
 
 # experiments logs
+experiments/
 log*/
 eval*/

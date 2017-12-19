@@ -1,3 +1,5 @@
+import logging
+
 import tensorflow as tf
 from tensorflow.contrib.layers import fully_connected
 
@@ -19,6 +21,8 @@ class CtcRecognitionModel(object):
     self._loss = loss
     self._is_training = is_training
     self._groundtruth_dict = {}
+
+    logging.info('Number of classes: {}'.format(self.num_classes))
 
   @property
   def num_classes(self):
@@ -46,7 +50,6 @@ class CtcRecognitionModel(object):
       if batch_size is None or map_depth is None:
         raise ValueError('batch_size and map_depth must be static')
       feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
-      # feature_sequence_list = tf.unstack(feature_sequence, axis=1)
 
       # build stacked bidirectional RNNs
       rnn_inputs = feature_sequence
@@ -59,16 +62,18 @@ class CtcRecognitionModel(object):
           rnn_inputs = rnn_outputs
 
       logits = fully_connected(rnn_outputs, self.num_classes, activation_fn=None)
-      return {'logits': logits}
+    return {'logits': logits}
 
   def loss(self, predictions_dict):
     logits = predictions_dict['logits']
     batch_size, max_time, _ = shape_utils.combined_static_and_dynamic_shape(logits)
-
     losses = tf.nn.ctc_loss(
       tf.cast(self._groundtruth_dict['text_labels_sparse'], tf.int32),
       predictions_dict['logits'],
       tf.fill([batch_size], max_time),
+      preprocess_collapse_repeated=False,
+      ctc_merge_repeated=True,
+      ignore_longer_outputs_than_inputs=True,
       time_major=False)
     loss = tf.reduce_mean(losses)
     
@@ -85,16 +90,14 @@ class CtcRecognitionModel(object):
     )
     labels = tf.sparse_tensor_to_dense(sparse_labels[0], default_value=-1)
     text = self._label_map.labels_to_text(labels)
-    recognitions_dict = {
-      'text': text
-    }
+    recognitions_dict = {'text': text}
     return recognitions_dict
 
   def provide_groundtruth(self, groundtruth_text_list):
     groundtruth_text = tf.stack(groundtruth_text_list, axis=0)
-    groundtruth_text_labels_sp, text_lengths = self._label_map.text_to_labels(
-      groundtruth_text,
-      return_dense=False,
-      return_lengths=True)
+    groundtruth_text_labels_sp, text_lengths = \
+      self._label_map.text_to_labels(
+        groundtruth_text, return_dense=False, return_lengths=True
+      )
     self._groundtruth_dict['text_labels_sparse'] = groundtruth_text_labels_sp
     self._groundtruth_dict['text_lengths'] = text_lengths
