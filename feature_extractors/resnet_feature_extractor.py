@@ -70,7 +70,7 @@ class ResnetFeatureExtractor(object):
     with tf.variable_scope(scope, 'Block', [inputs]):
       unit_output = self._residual_unit(inputs, num_outputs, subsample=first_subsample, is_training=is_training, scope='Block_1')
       for i in range(1, num_units):
-        unit_output = self._residual_unit(unit_output, num_outputs, subsample=None, scope='Block_{}'.format(i+1))
+        unit_output = self._residual_unit(unit_output, num_outputs, subsample=None, scope='Unit_{}'.format(i+1))
     return unit_output
 
   def _resnet(self, inputs, is_training=True, scope=None):
