@@ -7,6 +7,7 @@ from tensorflow.contrib.framework import arg_scope
 
 from rare.core import feature_extractor_pb2
 from rare.core import hyperparams
+from rare.utils import visualization_utils
 
 
 class FeatureExtractor(object):
@@ -22,6 +23,8 @@ class FeatureExtractor(object):
   def preprocess(self, resized_inputs, scope=None):
     with tf.variable_scope(scope, 'FeatureExtractorPreprocess', [resized_inputs]):
       preprocessed_inputs = (2.0 / 255.0) * resized_inputs - 1.0
+    if self._summarize_inputs:
+      tf.summary.image('preprocessed_inputs', preprocessed_inputs, max_outputs=1)
     return preprocessed_inputs
 
   @abstractmethod
@@ -168,15 +171,13 @@ class BaselineFeatureExtractor(FeatureExtractor):
 
   def __init__(self,
                conv_hyperparams=None,
-               summarize_inputs=False):
-    super(BaselineFeatureExtractor, self).__init__()
+               summarize_inputs=False,
+               is_training=None):
+    super(BaselineFeatureExtractor, self).__init__(
+      summarize_inputs=summarize_inputs,
+      is_training=is_training)
     self._conv_hyperparams = conv_hyperparams # FIXME: add it back
     self._summarize_inputs = summarize_inputs
-
-  def preprocess(self, resized_inputs, scope=None):
-    with tf.variable_scope(scope, 'ModelPreprocess', [resized_inputs]):
-      preprocessed_inputs = (2.0 / 255.0) * resized_inputs - 1.0
-    return preprocessed_inputs
 
   def extract_features(self, preprocessed_inputs, scope=None):
     """Extract features
@@ -215,7 +216,12 @@ class BaselineFeatureExtractor(FeatureExtractor):
         if self._summarize_inputs:
           for layer in [conv1, pool1, conv2, pool2, conv3,
                         conv4, pool4, conv5, conv6, pool6, conv7]:
-            tf.summary.histogram(layer.name, layer)
+            tf.summary.histogram(layer.op.name, layer)
+            # tf.summary.image(
+            #   layer.name,
+            #   visualization_utils.tile_activation_maps_max_dimensions(layer, 512, 512),
+            #   max_outputs=1
+            # )
     return [conv7]
 
 

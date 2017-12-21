@@ -150,6 +150,10 @@ def _build_initializer(initializer):
       gain=initializer.orthogonal_initializer.gain,
       seed=initializer.orthogonal_initializer.seed
     )
+  if initializer_oneof == 'uniform_initializer':
+    return tf.random_uniform_initializer(
+      minval=initializer.uniform_initializer.minval,
+      maxval=initializer.uniform_initializer.maxval)
   raise ValueError('Unknown initializer function: {}'.format(
       initializer_oneof))
 

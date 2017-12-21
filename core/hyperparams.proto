@@ -66,6 +66,7 @@ message Initializer {
     TruncatedNormalInitializer truncated_normal_initializer = 1;
     VarianceScalingInitializer variance_scaling_initializer = 2;
     OrthogonalInitializer orthogonal_initializer = 3;
+    UniformInitializer uniform_initializer = 4;
   }
 }
 
@@ -93,6 +94,11 @@ message VarianceScalingInitializer {
 message OrthogonalInitializer {
   optional float gain = 1 [default = 1.0];
   optional int32 seed = 2;
+}
+
+message UniformInitializer {
+  optional float minval = 1 [default = -0.1];
+  optional float maxval = 2 [default = 0.1];
 }
 
 // Configuration proto for batch norm to apply after convolution op. See
