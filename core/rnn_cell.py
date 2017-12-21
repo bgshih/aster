@@ -34,8 +34,7 @@ def build(rnn_cell_config):
       gru_cell_config.initializer)
     gru_cell_object = tf.contrib.rnn.GRUCell(
       gru_cell_config.num_units,
-      kernel_initializer=weights_initializer_object,
-      bias_initializer=tf.zeros_initializer
+      kernel_initializer=weights_initializer_object
     )
     return gru_cell_object
 
