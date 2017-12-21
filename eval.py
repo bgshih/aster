@@ -111,7 +111,7 @@ def get_configs_from_multiple_files():
 def main(unused_argv):
   if FLAGS.exp_dir:
     checkpoint_dir = os.path.join(FLAGS.exp_dir, 'log')
-    eval_dir = os.path.join(FLAGS.exp_dir, 'eval')
+    eval_dir = os.path.join(FLAGS.exp_dir, 'log/eval')
     model_config, eval_config, input_config = get_configs_from_exp_dir()
   else:
     assert FLAGS.checkpoint_dir, '`checkpoint_dir` is missing.'
