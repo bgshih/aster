@@ -1,6 +1,8 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
+import tensorflow as tf
+
 from rare.models import model_pb2
 
 

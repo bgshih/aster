@@ -1,9 +1,17 @@
+import functools
+
 import tensorflow as tf
 from tensorflow.contrib import seq2seq
-from tensorflow.contrib.layers import conv2d
+from tensorflow.contrib.layers import conv2d, fully_connected
+from tensorflow.contrib.framework import arg_scope
 
 from rare.core import label_map
-from rare.core import recognition_model, recognition_model_pb2
+from rare.core import rnn_cell
+from rare.core import bidirectional_rnn
+from rare.core import feature_extractor
+from rare.core import hyperparams
+from rare.core import loss
+from rare.models import model, model_pb2
 from rare.utils import shape_utils
 
 
@@ -12,10 +20,14 @@ class BahdanauAttentionPredictor(object):
 
   def __init__(self,
                rnn_cell,
+               rnn_regularizer=None,
+               fc_hyperparams=None,
                num_attention_units=None,
                max_num_steps=None,
                is_training=True):
     self._rnn_cell = rnn_cell
+    self._rnn_regularizer = rnn_regularizer
+    self._fc_hyperparams = fc_hyperparams
     self._num_attention_units = num_attention_units
     self._max_num_steps = max_num_steps
     self._is_training = is_training
@@ -28,21 +40,18 @@ class BahdanauAttentionPredictor(object):
               start_label=None,
               end_label=None,
               scope=None):
-    if isinstance(feature_map, list):
-      feature_map = feature_map[-1]
-
     with tf.variable_scope(scope, 'Predict', [feature_map]):
-      batch_size, _, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
+      batch_size, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
       if batch_size is None or map_depth is None:
         raise ValueError('batch_size and map_depth must be static')
 
       embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
-      memory = conv2d(feature_map,
-                      self._num_attention_units,
-                      kernel_size=1,
-                      stride=1,
-                      scope='MemoryConv')
-      memory = tf.reshape(memory, [batch_size, -1, self._num_attention_units])
+      feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
+      with arg_scope(self._fc_hyperparams):
+        memory = fully_connected(
+          feature_sequence,
+          self._num_attention_units,
+          scope='MemoryFc')
       attention_mechanism = seq2seq.BahdanauAttention(
         self._num_attention_units,
         memory,
@@ -62,35 +71,47 @@ class BahdanauAttentionPredictor(object):
           start_tokens=tf.tile([start_label], [batch_size]),
           end_token=end_label)
 
+      output_layer = tf.layers.Dense(
+        num_classes,
+        activation=None,
+        use_bias=True,
+        kernel_initializer=tf.variance_scaling_initializer(),
+        bias_initializer=tf.zeros_initializer())
       attention_decoder = seq2seq.BasicDecoder(
         cell=attention_cell,
         helper=helper,
         initial_state=attention_cell.zero_state(batch_size, tf.float32),
-        output_layer=tf.layers.Dense(num_classes))
+        output_layer=output_layer)
       outputs, _, output_lengths = seq2seq.dynamic_decode(
         decoder=attention_decoder,
         output_time_major=False,
         impute_finished=True,
         maximum_iterations=self._max_num_steps)
+
+      # apply regularizer
+      filter_weights = lambda vars : [x for x in vars if x.op.name.endswith('kernel')]
+      tf.contrib.layers.apply_regularization(
+        self._rnn_regularizer,
+        filter_weights(attention_cell.trainable_weights))
+
     return outputs.rnn_output, outputs.sample_id, output_lengths
 
 
-class AttentionRecognitionModel(recognition_model.RecognitionModel):
+class AttentionRecognitionModel(model.Model):
 
   def __init__(self,
                feature_extractor=None,
-               birnn_cells_list=[],
+               bidirectional_rnn_list=None,
                predictor=None,
                label_map=None,
                loss=None,
                is_training=True):
-    self._feature_extractor = feature_extractor
-    self._birnn_cells_list = birnn_cells_list
+    super(AttentionRecognitionModel, self).__init__(feature_extractor, is_training)
+    self._bidirectional_rnn_list = bidirectional_rnn_list
     self._predictor = predictor
     self._label_map = label_map
     self._loss = loss
-    self._is_training = is_training
-    self._groundtruth_dict = {}
+
     self.start_label = 0
     self.end_label = 1
 
@@ -98,36 +119,15 @@ class AttentionRecognitionModel(recognition_model.RecognitionModel):
   def num_classes(self):
     return self._label_map.num_classes + 2
 
-  def preprocess(self, resized_inputs, scope=None):
-    with tf.variable_scope(scope, 'ModelPreprocess', [resized_inputs]) as scope:
-      if resized_inputs.dtype is not tf.float32:
-        raise ValueError('`preprocess` expects a tf.float32 tensor')
-      preprocessed_inputs = self._feature_extractor.preprocess(resized_inputs)
-    return preprocessed_inputs
+  def predict(self, preprocessed_inputs, scope=None):
+    with tf.variable_scope(scope, 'FeatureExtractor', [preprocessed_inputs]) as scope:
+      feature_maps = self._feature_extractor.extract_features(preprocessed_inputs, scope=scope)
+      feature_map = feature_maps[-1]
+      batch_size, _, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
+      feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
 
-  def predict(self, preprocessed_images):
-    """
-    Args:
-      preprocessed_images: a float tensor with shape [batch_size, image_height, image_width, 3]
-    Returns:
-      predictions_dict: a dictionary of predicted tensors
-    """
-    with tf.variable_scope('FeatureExtractor') as scope:
-      batch_size = shape_utils.combined_static_and_dynamic_shape(preprocessed_images)[0]
-      feature_maps = self._feature_extractor.extract_features(preprocessed_images, scope=scope)
-
-      if len(self._birnn_cells_list) > 0:
-        feature_map = feature_maps[0]
-        batch_size, _, _, depth = shape_utils.combined_static_and_dynamic_shape(feature_map)  
-        rnn_inputs = tf.reshape(feature_map, [batch_size, -1, depth])
-        rnn_outputs = rnn_inputs
-        for i, (fw_cell, bw_cell) in enumerate(self._birnn_cells_list):
-          with tf.variable_scope('BidirectionalRnn_{}'.format(i)):
-            (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
-              fw_cell, bw_cell, rnn_inputs, time_major=False, dtype=tf.float32)
-            rnn_outputs = tf.concat([output_fw, output_bw], axis=2)
-            rnn_inputs = rnn_outputs
-        feature_maps = [tf.reshape(rnn_outputs, [batch_size, 1, -1, rnn_outputs.get_shape()[2].value])]
+      for i, brnn in enumerate(self._bidirectional_rnn_list):
+        feature_sequence = brnn.predict(feature_sequence, scope='BidirectionalRnn_{}'.format(i+1))
 
     with tf.variable_scope('Predictor') as scope:
       if self._is_training:
@@ -138,7 +138,7 @@ class AttentionRecognitionModel(recognition_model.RecognitionModel):
         decoder_inputs_lengths = None
 
       logits, labels, lengths = self._predictor.predict(
-        feature_maps,
+        feature_sequence,
         decoder_inputs=decoder_inputs,
         decoder_inputs_lengths=decoder_inputs_lengths,
         num_classes=self.num_classes,
@@ -193,18 +193,23 @@ class AttentionRecognitionModel(recognition_model.RecognitionModel):
 
 
 def _build_attention_predictor(config, is_training):
-  if not isinstance(config, recognition_model_pb2.AttentionPredictor):
-    raise ValueError('config not of type recognition_model_pb2.AttentionPredictor')
-  attention_predictor_oneof = model_config.WhichOneof('attention_predictor_oneof')
+  if not isinstance(config, model_pb2.AttentionPredictor):
+    raise ValueError('config not of type model_pb2.AttentionPredictor')
+  attention_predictor_oneof = config.WhichOneof('attention_predictor_oneof')
 
   if attention_predictor_oneof == 'bahdanau_attention_predictor':
-    attention_predictor_config = config.bahdanau_attention_predictor
-
-    rnn_cell_object = rnn_cell.build(attention_predictor_config.rnn_cell)
+    predictor_config = config.bahdanau_attention_predictor
+    rnn_cell_object = rnn_cell.build(predictor_config.rnn_cell)
+    rnn_regularizer_object = hyperparams._build_regularizer(predictor_config.rnn_regularizer)
+    fc_hyperparams_object = hyperparams.build(
+      predictor_config.fc_hyperparams,
+      is_training)
     attention_predictor_object = BahdanauAttentionPredictor(
       rnn_cell=rnn_cell_object,
-      num_attention_units=attention_predictor_config.num_attention_units,
-      max_num_steps=attention_predictor_config.max_num_steps,
+      rnn_regularizer=rnn_regularizer_object,
+      fc_hyperparams=fc_hyperparams_object,
+      num_attention_units=predictor_config.num_attention_units,
+      max_num_steps=predictor_config.max_num_steps,
       is_training=is_training
     )
     return attention_predictor_object
@@ -213,24 +218,21 @@ def _build_attention_predictor(config, is_training):
 
 
 def build(config, is_training):
-  if not isinstance(config, recognition_model_pb2.AttentionRecognitionModel):
-    raise ValueError('config not of type recognition_model_pb2.AttentionRecognitionModel')
+  if not isinstance(config, model_pb2.AttentionRecognitionModel):
+    raise ValueError('config not of type model_pb2.AttentionRecognitionModel')
 
   feature_extractor_object = feature_extractor.build(config.feature_extractor, is_training=is_training)
-  bidirectional_rnn_cells_list = []
-  for rnn_cell_config in model_config.bidirectional_rnn_cell:
-    bidirectional_rnn_cells_list.append(
-      (rnn_cell.build(rnn_cell_config),
-       rnn_cell.build(rnn_cell_config))
-    )
+  bidirectional_rnn_list = [
+    bidirectional_rnn.build(brnn_config, is_training) for brnn_config in config.bidirectional_rnn
+  ]
   attention_predictor_object = _build_attention_predictor(
-    model_config.attention_predictor, is_training)
-  label_map_object = label_map.build(model_config.label_map)
-  loss_object = loss.build(model_config.loss)
+    config.attention_predictor, is_training)
+  label_map_object = label_map.build(config.label_map)
+  loss_object = loss.build(config.loss)
 
   model_object = AttentionRecognitionModel(
     feature_extractor=feature_extractor_object,
-    birnn_cells_list=bidirectional_rnn_cells_list,
+    bidirectional_rnn_list=bidirectional_rnn_list,
     predictor=attention_predictor_object,
     label_map=label_map_object,
     loss=loss_object,

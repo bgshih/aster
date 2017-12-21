@@ -20,11 +20,10 @@ class CtcRecognitionModel(model.Model):
                fc_hyperparams=None,
                label_map=None,
                is_training=True):
-    self._feature_extractor = feature_extractor
+    super(CtcRecognitionModel, self).__init__(feature_extractor, is_training)
     self._bidirectional_rnn_list = bidirectional_rnn_list
     self._label_map = label_map
     self._fc_hyperparams = fc_hyperparams
-    self._is_training = is_training
     self._groundtruth_dict = {}
 
     logging.info('Number of classes: {}'.format(self.num_classes))

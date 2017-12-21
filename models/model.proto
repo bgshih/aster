@@ -20,6 +20,9 @@ message BahdanauAttentionPredictor {
   optional RnnCell rnn_cell = 1;
   optional int32 num_attention_units = 2 [default=128];
   optional int32 max_num_steps = 3 [default=40];
+  optional Regularizer rnn_regularizer = 4;
+  // hyperparams for the memory fully-connected layer
+  optional Hyperparams fc_hyperparams = 5;
 }
 
 message AttentionPredictor {
@@ -30,8 +33,8 @@ message AttentionPredictor {
 
 message AttentionRecognitionModel {
   optional FeatureExtractor feature_extractor = 1;
-  repeated RnnCell bidirectional_rnn_cell = 2;
-  optional AttentionPredictor predictor = 3;
+  repeated BidirectionalRnn bidirectional_rnn = 2;
+  optional AttentionPredictor attention_predictor = 3;
   optional LabelMap label_map = 4;
   optional Loss loss = 5;
 }
