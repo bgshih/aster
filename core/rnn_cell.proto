@@ -1,0 +1,24 @@
+syntax = "proto2";
+package rare.protos;
+
+import "rare/core/hyperparams.proto";
+
+
+message RnnCell {
+  oneof rnn_cell_oneof {
+    LstmCell lstm_cell = 1;
+    GruCell gru_cell = 2;
+  }
+}
+
+message LstmCell {
+  optional uint32 num_units = 1 [default=128];
+  optional bool use_peepholes = 2 [default=false];
+  optional float forget_bias = 3 [default=1.0];
+  optional Initializer initializer = 4;
+}
+
+message GruCell {
+  optional uint32 num_units = 1 [default=128];
+  optional Initializer initializer = 2;
+}
