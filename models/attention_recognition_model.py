@@ -1,3 +1,4 @@
+import logging
 import functools
 
 import tensorflow as tf
@@ -114,6 +115,7 @@ class AttentionRecognitionModel(model.Model):
 
     self.start_label = 0
     self.end_label = 1
+    logging.info('Number of classes: {}'.format(self.num_classes))
 
   @property
   def num_classes(self):
