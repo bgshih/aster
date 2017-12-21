@@ -4,23 +4,26 @@ import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.layers import fully_connected
 
+from rare.core import hyperparams
 from rare.core import label_map
 from rare.core import feature_extractor
 from rare.core import bidirectional_rnn
-from rare.models import recognition_model, recognition_model_pb2
+from rare.models import model, model_pb2
 from rare.utils import shape_utils
 
 
-class CtcRecognitionModel(recognition_model.RecognitionModel):
+class CtcRecognitionModel(model.Model):
 
   def __init__(self,
                feature_extractor=None,
-               bidirectional_rnn=None,
+               bidirectional_rnn_list=None,
+               fc_hyperparams=None,
                label_map=None,
                is_training=True):
     self._feature_extractor = feature_extractor
-    self._bidirectional_rnn = bidirectional_rnn
+    self._bidirectional_rnn_list = bidirectional_rnn_list
     self._label_map = label_map
+    self._fc_hyperparams = fc_hyperparams
     self._is_training = is_training
     self._groundtruth_dict = {}
 
@@ -45,21 +48,24 @@ class CtcRecognitionModel(recognition_model.RecognitionModel):
     Returns:
       predictions_dict: a diction of predicted tensors
     """
-    with tf.variable_scope(scope, 'CtcRecognitionModel', [preprocessed_inputs]) as scope:
-      with tf.variable_scope('FeatureExtractor') as scope:
+    with tf.variable_scope(scope, 'CtcRecognitionModel', [preprocessed_inputs]):
+      with tf.variable_scope('FeatureExtractor') as feat_scope:
         feature_map = self._feature_extractor.extract_features(
-          preprocessed_inputs, scope=scope)[0]
+          preprocessed_inputs, scope=feat_scope)[0]
 
-      with tf.variable_scope('Predictor') as scope:
+      with tf.variable_scope('Predictor'):
         feature_map_shape = shape_utils.combined_static_and_dynamic_shape(feature_map)
         batch_size, map_depth = feature_map_shape[0], feature_map_shape[3]
         if batch_size is None or map_depth is None:
           raise ValueError('batch_size and map_depth must be static')
         feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
 
-        rnn_outputs = self._bidirectional_rnn.predict(feature_sequence)
-        with arg_scope(self._bidirectional_rnn._fc_hyperparams):
-          logits = fully_connected(rnn_outputs, self.num_classes, activation_fn=None)
+        last_outputs = feature_sequence
+        for i, brnn in enumerate(self._bidirectional_rnn_list):
+          last_outputs = brnn.predict(last_outputs, scope='BidirectionalRnn_{}'.format(i+1))
+
+        with arg_scope(self._fc_hyperparams):
+          logits = fully_connected(last_outputs, self.num_classes, activation_fn=None)
     return {'logits': logits}
 
   def loss(self, predictions_dict, scope=None):
@@ -104,18 +110,22 @@ class CtcRecognitionModel(recognition_model.RecognitionModel):
 
 
 def build(config, is_training):
-  if not isinstance(config, recognition_model_pb2.CtcRecognitionModel):
-    raise ValueError('config not of type recognition_model_pb2.CtcRecognitionModel')
+  if not isinstance(config, model_pb2.CtcRecognitionModel):
+    raise ValueError('config not of type model_pb2.CtcRecognitionModel')
 
   feature_extractor_object = feature_extractor.build(
     config.feature_extractor,
     is_training=is_training
   )
   label_map_object = label_map.build(config.label_map)
-  bidirectional_rnn_object = bidirectional_rnn.build(config.bidirectional_rnn, is_training)
+  bidirectional_rnn_list = [
+    bidirectional_rnn.build(brnn_config, is_training) for brnn_config in config.bidirectional_rnn
+  ]
+  fc_hyperparams_object = hyperparams.build(config.fc_hyperparams, is_training)
   model_object = CtcRecognitionModel(
     feature_extractor=feature_extractor_object,
-    bidirectional_rnn=bidirectional_rnn_object,
+    bidirectional_rnn_list=bidirectional_rnn_list,
+    fc_hyperparams=fc_hyperparams_object,
     label_map=label_map_object,
     is_training=is_training)
   return model_object

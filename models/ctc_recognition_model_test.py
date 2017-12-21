@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from google.protobuf import text_format
-from rare.models import recognition_model, recognition_model_pb2
+from rare.models import model, model_pb2
 
 
 class CtcRecognitionModelBuilderTest(tf.test.TestCase):
@@ -57,6 +57,12 @@ class CtcRecognitionModelBuilderTest(tf.test.TestCase):
         }
       }
 
+      fc_hyperparams {
+        op: FC
+        initializer { variance_scaling_initializer {} }
+        regularizer { l2_regularizer { weight: 1e-4 } }
+      }
+
       label_map {
         character_set {
           text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -66,9 +72,9 @@ class CtcRecognitionModelBuilderTest(tf.test.TestCase):
       }
     }
     """
-    model_proto = recognition_model_pb2.RecognitionModel()
+    model_proto = model_pb2.Model()
     text_format.Merge(model_text_proto, model_proto)
-    model_object = recognition_model.build(model_proto, True)
+    model_object = model.build(model_proto, True)
 
     test_groundtruth_text_list = [
       tf.constant(b'hello', dtype=tf.string),

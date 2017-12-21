@@ -1,10 +1,10 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
-from rare.models import recognition_model_pb2
+from rare.models import model_pb2
 
 
-class RecognitionModel(object):
+class Model(object):
   __metaclass__ = ABCMeta
 
   def __init__(self, feature_extractor, is_training):
@@ -13,9 +13,9 @@ class RecognitionModel(object):
     self._groundtruth_dict = {}
 
   def preprocess(self, resized_inputs, scope=None):
-    if resized_inputs.dtype is not tf.float32:
-      raise ValueError('`preprocess` expects a tf.float32 tensor')
     with tf.variable_scope(scope, 'ModelPreprocess', [resized_inputs]) as preprocess_scope:
+      if resized_inputs.dtype is not tf.float32:
+        raise ValueError('`preprocess` expects a tf.float32 tensor')
       preprocess_inputs = self._feature_extractor.preprocess(resized_inputs, scope=preprocess_scope)
     return preprocess_inputs
 
@@ -37,11 +37,11 @@ class RecognitionModel(object):
 
 
 def build(model_config, is_training):
-  if not isinstance(model_config, recognition_model_pb2.RecognitionModel):
+  if not isinstance(model_config, model_pb2.Model):
     raise ValueError('model_config not of type '
-                     'recognition_model_pb2.RecognitionModel')
+                     'model_pb2.Model')
 
-  model_oneof = model_config.WhichOneof('recognition_model_oneof')
+  model_oneof = model_config.WhichOneof('model_oneof')
   if model_oneof == 'attention_recognition_model':
     from rare.models import attention_recognition_model
     return attention_recognition_model.build(model_config.attention_recognition_model, is_training)
@@ -49,4 +49,4 @@ def build(model_config, is_training):
     from rare.models import ctc_recognition_model
     return ctc_recognition_model.build(model_config.ctc_recognition_model, is_training)
   else:
-    raise ValueError('Unknown recognition_model_oneof: {}'.format(model_oneof))
+    raise ValueError('Unknown model_oneof: {}'.format(model_oneof))

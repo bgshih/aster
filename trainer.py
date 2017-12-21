@@ -2,10 +2,9 @@ import functools
 
 import tensorflow as tf
 
-from rare.builders import optimizer_builder
-from rare.builders import preprocessor_builder
+from rare.core import preprocessor, preprocessor_builder
+from rare.core import optimizer
 from rare.core import batcher
-from rare.core import preprocessor
 from rare.core import standard_fields as fields
 from rare.utils import variables_helper
 from rare.utils import model_deploy
@@ -124,7 +123,7 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
 
     with tf.device(deploy_config.optimizer_device()), \
          tf.name_scope('Optimizer'):
-      training_optimizer = optimizer_builder.build(
+      training_optimizer = optimizer.build(
         train_config.optimizer,
         global_summaries
       )

@@ -2,14 +2,15 @@ syntax = "proto2";
 package rare.protos;
 
 import "rare/core/feature_extractor.proto";
+import "rare/core/hyperparams.proto";
 import "rare/core/rnn_cell.proto";
 import "rare/core/bidirectional_rnn.proto";
 import "rare/core/label_map.proto";
 import "rare/core/loss.proto";
 
 
-message RecognitionModel {
-  oneof recognition_model_oneof {
+message Model {
+  oneof model_oneof {
     AttentionRecognitionModel attention_recognition_model = 1;
     CtcRecognitionModel ctc_recognition_model = 2;
   }
@@ -37,6 +38,8 @@ message AttentionRecognitionModel {
 
 message CtcRecognitionModel {
   optional FeatureExtractor feature_extractor = 1;
-  optional BidirectionalRnn bidirectional_rnn = 2;
-  optional LabelMap label_map = 3;
+  repeated BidirectionalRnn bidirectional_rnn = 2;
+  // hyperparams for the output fully-connected layer
+  optional Hyperparams fc_hyperparams = 3;
+  optional LabelMap label_map = 4;
 }
