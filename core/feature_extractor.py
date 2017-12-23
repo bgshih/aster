@@ -125,7 +125,7 @@ class ResnetFeatureExtractor(FeatureExtractor):
     return [resnet_outputs[-1]]
 
 
-class Resnet52LayerFeatureExtractor(ResnetFeatureExtractor):
+class Resnet50LayerFeatureExtractor(ResnetFeatureExtractor):
 
   def __init__(self,
                summarize_inputs=None,
@@ -133,13 +133,13 @@ class Resnet52LayerFeatureExtractor(ResnetFeatureExtractor):
                conv_hyperparams=None):
     # block_name: (scope, num_units, num_outputs, first_subsample)
     resnet_spec = [
-      ('Block_1', 6, 16, [2, 2]),
-      ('Block_2', 6, 32, [2, 2]),
-      ('Block_3', 6, 64, [2, 1]),
-      ('Block_4', 6, 128, [2, 1]),
-      ('Block_5', 6, 256, [2, 1]),
+      ('Block_1', 3, 32, [2, 2]),
+      ('Block_2', 4, 64, [2, 2]),
+      ('Block_3', 6, 128, [2, 1]),
+      ('Block_4', 6, 256, [2, 1]),
+      ('Block_5', 3, 512, [2, 1]),
     ]
-    super(Resnet52LayerFeatureExtractor, self).__init__(
+    super(Resnet50LayerFeatureExtractor, self).__init__(
       summarize_inputs,
       is_training,
       conv_hyperparams=conv_hyperparams,
@@ -153,7 +153,7 @@ def _build_resnet(config, is_training):
 
   resnet_type = config.resnet_type
   if resnet_type == feature_extractor_pb2.ResnetFeatureExtractor.RESNET_50:
-    resnet_class = Resnet52LayerFeatureExtractor
+    resnet_class = Resnet50LayerFeatureExtractor
   else:
     raise ValueError('Unknown resnet type: {}'.format(resnet_type))
 
@@ -213,15 +213,10 @@ class BaselineFeatureExtractor(FeatureExtractor):
         pool6 = max_pool2d(conv6, 2, stride=[2, 1], scope='pool6')
         conv7 = conv2d(pool6, 512, kernel_size=[2, 1], padding='VALID', scope='conv7')
 
-        if self._summarize_inputs:
-          for layer in [conv1, pool1, conv2, pool2, conv3,
-                        conv4, pool4, conv5, conv6, pool6, conv7]:
-            tf.summary.histogram(layer.op.name, layer)
-            # tf.summary.image(
-            #   layer.name,
-            #   visualization_utils.tile_activation_maps_max_dimensions(layer, 512, 512),
-            #   max_outputs=1
-            # )
+      if self._summarize_inputs:
+        for layer in [conv1, pool1, conv2, pool2, conv3,
+                      conv4, pool4, conv5, conv6, pool6, conv7]:
+          tf.summary.histogram(layer.op.name, layer)
     return [conv7]
 
 

@@ -47,19 +47,15 @@ class BahdanauAttentionPredictor(object):
         raise ValueError('batch_size and map_depth must be static')
 
       embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
-      feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
-      with arg_scope(self._fc_hyperparams):
-        memory = fully_connected(
-          feature_sequence,
-          self._num_attention_units,
-          scope='MemoryFc')
+      memory = tf.reshape(feature_map, [batch_size, -1, map_depth])
       attention_mechanism = seq2seq.BahdanauAttention(
         self._num_attention_units,
         memory,
         memory_sequence_length=None) # all full lenghts
       attention_cell = seq2seq.AttentionWrapper(
         self._rnn_cell,
-        attention_mechanism)
+        attention_mechanism,
+        output_attention=False)
 
       if self._is_training:
         helper = seq2seq.TrainingHelper(
@@ -86,7 +82,7 @@ class BahdanauAttentionPredictor(object):
       outputs, _, output_lengths = seq2seq.dynamic_decode(
         decoder=attention_decoder,
         output_time_major=False,
-        impute_finished=True,
+        impute_finished=False,
         maximum_iterations=self._max_num_steps)
 
       # apply regularizer
@@ -94,6 +90,9 @@ class BahdanauAttentionPredictor(object):
       tf.contrib.layers.apply_regularization(
         self._rnn_regularizer,
         filter_weights(attention_cell.trainable_weights))
+
+      import ipdb; ipdb.set_trace()
+      pass
 
     return outputs.rnn_output, outputs.sample_id, output_lengths
 
@@ -113,9 +112,15 @@ class AttentionRecognitionModel(model.Model):
     self._label_map = label_map
     self._loss = loss
 
-    self.start_label = 0
-    self.end_label = 1
     logging.info('Number of classes: {}'.format(self.num_classes))
+
+  @property
+  def start_label(self):
+    return 0
+
+  @property
+  def end_label(self):
+    return 1
 
   @property
   def num_classes(self):
@@ -160,8 +165,8 @@ class AttentionRecognitionModel(model.Model):
     with tf.variable_scope(scope, 'Loss', list(predictions_dict.values())):
       loss = self._loss(
         predictions_dict['logits'],
-        self._groundtruth_dict['prediction_labels'],
-        self._groundtruth_dict['prediction_labels_lengths']
+        self._groundtruth_dict['target_labels'],
+        self._groundtruth_dict['target_labels_lengths']
       )
     return {'RecognitionLoss': loss}
 
@@ -183,15 +188,15 @@ class AttentionRecognitionModel(model.Model):
       decoder_inputs = tf.concat(
         [start_labels, groundtruth_text_labels],
         axis=1)
-      prediction_labels = tf.concat(
+      target_labels = tf.concat(
         [groundtruth_text_labels, end_labels],
         axis=1)
       self._groundtruth_dict['text_labels'] = groundtruth_text_labels
       self._groundtruth_dict['text_lengths'] = text_lengths
       self._groundtruth_dict['decoder_inputs'] = decoder_inputs
       self._groundtruth_dict['decoder_inputs_lengths'] = text_lengths + 1
-      self._groundtruth_dict['prediction_labels'] = prediction_labels
-      self._groundtruth_dict['prediction_labels_lengths'] = text_lengths + 1
+      self._groundtruth_dict['target_labels'] = target_labels
+      self._groundtruth_dict['target_labels_lengths'] = text_lengths + 1
 
 
 def _build_attention_predictor(config, is_training):

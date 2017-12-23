@@ -5,7 +5,7 @@ from rare.core import loss_pb2
 
 
 class SequenceCrossEntropyLoss(object):
-  def __init__(self, sequence_normalize=False, sample_normalize=True):
+  def __init__(self, sequence_normalize=None, sample_normalize=None):
     self._sequence_normalize = sequence_normalize
     self._sample_normalize = sample_normalize
 
@@ -24,24 +24,26 @@ class SequenceCrossEntropyLoss(object):
       batch_size, max_time = shape_utils.combined_static_and_dynamic_shape(labels)
       mask = tf.less(
         tf.tile([tf.range(max_time)], [batch_size, 1]),
-        tf.expand_dims(lengths, 1)
+        tf.expand_dims(lengths, 1),
+        name='mask'
       )
       masked_losses = tf.multiply(
         raw_losses,
-        tf.cast(mask, tf.float32)
+        tf.cast(mask, tf.float32),
+        name='masked_losses'
       ) # => [batch_size, max_time]
-      row_losses = tf.reduce_sum(masked_losses, 1)
+      row_losses = tf.reduce_sum(masked_losses, 1, name='row_losses')
       if self._sequence_normalize:
-        row_losses = tf.truediv(
+        loss = tf.truediv(
           row_losses,
-          tf.cast(tf.maximum(lengths, 1), tf.float32))
+          tf.cast(tf.maximum(lengths, 1), tf.float32),
+          name='seq_normed_losses')
       loss = tf.reduce_sum(row_losses)
       if self._sample_normalize:
         loss = tf.truediv(
           loss,
           tf.cast(tf.maximum(batch_size, 1), tf.float32))
     return loss
-
 
 def build(config):
   if not isinstance(config, loss_pb2.Loss):

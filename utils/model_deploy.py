@@ -623,7 +623,7 @@ class DeploymentConfig(object):
       A value suitable for `tf.device()`.
     """
     if self._num_ps_tasks > 0 or self._num_clones > 0:
-      return self._worker_device + '/device:GPU:0'
+      return self._worker_device + '/device:CPU:0'
     else:
       return ''
 
@@ -648,7 +648,7 @@ class DeploymentConfig(object):
     device = ''
     if self._num_ps_tasks > 0:
       device += self._ps_device
-    device += '/device:GPU:0'
+    device += '/device:CPU:0'
 
     class _PSDeviceChooser(object):
       """Slim device chooser for variables when using PS."""

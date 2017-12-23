@@ -9,8 +9,8 @@ class LossTest(tf.test.TestCase):
   def test_build_loss(self):
     loss_text_proto = """
       sequence_cross_entropy_loss {
-        sequence_normalize: true
-        sample_normalize: false
+        sequence_normalize: false
+        sample_normalize: true
       }
     """
     loss_proto = loss_pb2.Loss()
@@ -43,7 +43,7 @@ class LossTest(tf.test.TestCase):
       [3, 1],
       dtype=tf.int32
     )
-    loss_tensor = loss_object(test_logits, test_labels, test_lengths)
+    loss_tensor = loss_object(test_logits, test_labels, test_lengths, scope='loss')
 
     with self.test_session() as sess:
       outputs = sess.run({
