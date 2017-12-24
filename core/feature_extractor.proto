@@ -2,6 +2,7 @@ syntax = "proto2";
 package rare.protos;
 
 import "rare/core/hyperparams.proto";
+import "rare/core/bidirectional_rnn.proto";
 
 
 message FeatureExtractor {
@@ -12,8 +13,15 @@ message FeatureExtractor {
 }
 
 message BaselineFeatureExtractor {
-  optional Hyperparams conv_hyperparams = 1;
-  optional bool summarize_inputs = 2 [default=false];
+  enum BaselineType {
+    SINGLE_BRANCH = 0;
+    TWO_BRANCH = 1;
+    THREE_BRANCH = 2;
+  }
+  optional BaselineType baseline_type = 1 [default = SINGLE_BRANCH];
+  optional Hyperparams conv_hyperparams = 2;
+  optional bool summarize_inputs = 3 [default=false];
+  repeated BidirectionalRnn bidirectional_rnn = 4;
 }
 
 message ResnetFeatureExtractor {
@@ -23,4 +31,5 @@ message ResnetFeatureExtractor {
   optional ResnetType resnet_type = 1 [default=RESNET_50];
   optional Hyperparams conv_hyperparams = 2;
   optional bool summarize_inputs = 3 [default=false];
+  repeated BidirectionalRnn bidirectional_rnn = 4;
 }

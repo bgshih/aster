@@ -91,9 +91,6 @@ class BahdanauAttentionPredictor(object):
         self._rnn_regularizer,
         filter_weights(attention_cell.trainable_weights))
 
-      import ipdb; ipdb.set_trace()
-      pass
-
     return outputs.rnn_output, outputs.sample_id, output_lengths
 
 
@@ -130,8 +127,12 @@ class AttentionRecognitionModel(model.Model):
     with tf.variable_scope(scope, 'FeatureExtractor', [preprocessed_inputs]) as scope:
       feature_maps = self._feature_extractor.extract_features(preprocessed_inputs, scope=scope)
       feature_map = feature_maps[-1]
-      batch_size, _, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
-      feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
+
+      if len(self._bidirectional_rnn_list) > 0:
+        for i, brnn in enumerate(self._bidirectional_rnn_list):
+        batch_size, _, _, map_depth = shape_utils.combined_static_and_dynamic_shape(feature_map)
+        feature_sequence = tf.reshape(feature_map, [batch_size, -1, map_depth])
+
 
       for i, brnn in enumerate(self._bidirectional_rnn_list):
         feature_sequence = brnn.predict(feature_sequence, scope='BidirectionalRnn_{}'.format(i+1))
@@ -186,17 +187,17 @@ class AttentionRecognitionModel(model.Model):
       start_labels = tf.fill([batch_size, 1], tf.constant(self.start_label, tf.int64))
       end_labels = tf.fill([batch_size, 1], tf.constant(self.end_label, tf.int64))
       decoder_inputs = tf.concat(
-        [start_labels, groundtruth_text_labels],
+        [start_labels, start_labels, groundtruth_text_labels],
         axis=1)
       target_labels = tf.concat(
-        [groundtruth_text_labels, end_labels],
+        [start_labels, groundtruth_text_labels, end_labels],
         axis=1)
       self._groundtruth_dict['text_labels'] = groundtruth_text_labels
       self._groundtruth_dict['text_lengths'] = text_lengths
       self._groundtruth_dict['decoder_inputs'] = decoder_inputs
-      self._groundtruth_dict['decoder_inputs_lengths'] = text_lengths + 1
+      self._groundtruth_dict['decoder_inputs_lengths'] = text_lengths + 2
       self._groundtruth_dict['target_labels'] = target_labels
-      self._groundtruth_dict['target_labels_lengths'] = text_lengths + 1
+      self._groundtruth_dict['target_labels_lengths'] = text_lengths + 2
 
 
 def _build_attention_predictor(config, is_training):
