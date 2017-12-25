@@ -1,9 +1,10 @@
 import logging
 import tensorflow as tf
 
-from rare.core import preprocessor, preprocessor_builder
+from rare.core import preprocessor
 from rare.core import prefetcher
 from rare.core import standard_fields as fields
+from rare.builders import preprocessor_builder
 from rare import eval_util
 
 

@@ -53,6 +53,7 @@ from rare.protos import model_pb2
 from rare.protos import pipeline_pb2
 from rare.protos import train_pb2
 from rare.protos import input_reader_pb2
+from rare.builders import model_builder
 from rare.builders import input_reader_builder
 from rare import trainer
 
@@ -160,7 +161,7 @@ def main(_):
 
   model_fn = functools.partial(
     model_builder.build,
-    model_config=model_config,
+    config=model_config,
     is_training=True
   )
 

@@ -109,3 +109,4 @@ log*/
 eval*/
 .vscode/
 ._.DS_Store
+*.dylib

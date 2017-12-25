@@ -125,9 +125,10 @@ def main(unused_argv):
     eval_dir = FLAGS.eval_dir
 
   model_fn = functools.partial(
-      model_builder.build,
-      model_config=model_config,
-      is_training=False)
+    model_builder.build,
+    config=model_config,
+    is_training=False
+  )
 
   create_input_dict_fn = functools.partial(
       input_reader_builder.build,

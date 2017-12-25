@@ -19,8 +19,8 @@ class FeatureExtractor(object):
     self._is_training = is_training
 
   def preprocess(self, resized_inputs, scope=None):
-    with tf.variable_scope(scope, 'FeatureExtractorPreprocess', [resized_inputs]):
-      preprocessed_inputs = self._convnet.preprocess(resized_inputs, scope)
+    with tf.variable_scope(scope, 'FeatureExtractorPreprocess', [resized_inputs]) as preproc_scope:
+      preprocessed_inputs = self._convnet.preprocess(resized_inputs, preproc_scope)
     return preprocessed_inputs
 
   def extract_features(self, preprocessed_inputs, scope=None):
