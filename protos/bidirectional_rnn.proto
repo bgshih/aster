@@ -5,9 +5,10 @@ import "rare/protos/rnn_cell.proto";
 import "rare/protos/hyperparams.proto";
 
 message BidirectionalRnn {
-  optional RnnCell fw_bw_rnn_cell = 1;
-  optional Regularizer rnn_regularizer = 2;
-  optional int32 num_output_units = 3;
-  optional Hyperparams fc_hyperparams = 4;
-  optional bool summarize_activations = 5 [default = false];
+  optional bool static = 1 [default = true];
+  optional RnnCell fw_bw_rnn_cell = 2;
+  optional Regularizer rnn_regularizer = 3;
+  optional int32 num_output_units = 4;
+  optional Hyperparams fc_hyperparams = 5;
+  optional bool summarize_activations = 6 [default = false];
 }
