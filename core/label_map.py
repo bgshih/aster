@@ -3,21 +3,25 @@ import logging
 
 import tensorflow as tf
 
-from rare.core import label_map_pb2
 from rare.utils import shape_utils
 
 
 class LabelMap(object):
 
-  def __init__(self, config):
-    if not isinstance(config, label_map_pb2.LabelMap):
-      raise ValueError('config not of type label_map_pb2.LabelMap')
-    self._character_set = _build_character_set(config.character_set)
-    self._label_offset = config.label_offset
-    self._unk_label = config.unk_label or config.label_offset
-    logging.info('UNK label is {}'.format(self._unk_label))
+  def __init__(self,
+               character_set=None,
+               label_offset=0,
+               unk_label=None):
+    if not isinstance(character_set, list):
+      raise ValueError('character_set must be provided as a list')
+    if len(frozenset(character_set)) != len(character_set):
+      raise ValueError('Found duplicate characters in character_set')
+    self._character_set = character_set
+    self._label_offset = label_offset
+    self._unk_label = unk_label or self._label_offset
 
-    self._char_to_label_table, self._label_to_char_table = self._build_lookup_tables()  
+    logging.info('UNK label is {}'.format(self._unk_label))
+    self._char_to_label_table, self._label_to_char_table = self._build_lookup_tables()
 
   @property
   def num_classes(self):
@@ -95,27 +99,3 @@ class LabelMap(object):
     chars = self._label_to_char_table.lookup(labels)
     text = tf.reduce_join(chars, axis=1)
     return text
-
-
-def _build_character_set(config):
-  if not isinstance(config, label_map_pb2.CharacterSet):
-    raise ValueError('config not of type label_map_pb2.CharacterSet')
-
-  source_oneof = config.WhichOneof('source_oneof')
-  character_set_string = None
-  if source_oneof == 'text_file':
-    file_path = config.text_file
-    with open(file_path, 'r') as f:
-      character_set_string = f.read()
-  elif source_oneof == 'text_string':
-    character_set_string = config.text_string
-
-  if not config.delimiter:
-    character_set = list(character_set_string)
-  else:
-    character_set = character_set_string.split()
-  return character_set
-
-
-def build(config):
-  return LabelMap(config)

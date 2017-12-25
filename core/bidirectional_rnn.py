@@ -2,15 +2,15 @@ import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.layers import fully_connected
 
-from rare.core import bidirectional_rnn_pb2
-from rare.core import rnn_cell
-from rare.core import hyperparams, hyperparams_pb2
-
 
 class BidirectionalRnn(object):
 
-  def __init__(self, fw_cell, bw_cell,
-               rnn_regularizer=None, num_output_units=None, fc_hyperparams=None,
+  def __init__(self,
+               fw_cell,
+               bw_cell,
+               rnn_regularizer=None,
+               num_output_units=None,
+               fc_hyperparams=None,
                summarize_activations=False):
     self._fw_cell = fw_cell
     self._bw_cell = bw_cell
@@ -40,24 +40,3 @@ class BidirectionalRnn(object):
         tf.summary.histogram('Activations/{}/Step_{}'.format(scope.name, t), activation_t)
 
     return rnn_outputs
-
-
-def build(config, is_training):
-  if not isinstance(config, bidirectional_rnn_pb2.BidirectionalRnn):
-    raise ValueError('config not of type bidirectional_rnn_pb2.BidirectionalRnn')
-
-  fw_cell_object = rnn_cell.build(config.fw_bw_rnn_cell)
-  bw_cell_object = rnn_cell.build(config.fw_bw_rnn_cell)
-  rnn_regularizer_object = hyperparams._build_regularizer(config.rnn_regularizer)
-  fc_hyperparams_object = None
-  if config.num_output_units:
-    if config.fc_hyperparams.op != hyperparams_pb2.Hyperparams.FC:
-      raise ValueError('op type must be FC')
-    fc_hyperparams_object = hyperparams.build(config.fc_hyperparams, is_training)
-
-  return BidirectionalRnn(
-    fw_cell_object, bw_cell_object,
-    rnn_regularizer=rnn_regularizer_object,
-    num_output_units=config.num_output_units,
-    fc_hyperparams=fc_hyperparams_object,
-    summarize_activations=config.summarize_activations)

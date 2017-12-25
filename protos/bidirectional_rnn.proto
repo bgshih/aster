@@ -1,0 +1,13 @@
+syntax = "proto2";
+package rare.protos;
+
+import "rare/protos/rnn_cell.proto";
+import "rare/protos/hyperparams.proto";
+
+message BidirectionalRnn {
+  optional RnnCell fw_bw_rnn_cell = 1;
+  optional Regularizer rnn_regularizer = 2;
+  optional int32 num_output_units = 3;
+  optional Hyperparams fc_hyperparams = 4;
+  optional bool summarize_activations = 5 [default = false];
+}

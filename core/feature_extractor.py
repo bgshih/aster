@@ -1,42 +1,34 @@
-from abc import ABCMeta
-from abc import abstractmethod
 import functools
 
 import tensorflow as tf
 from tensorflow.contrib.layers import conv2d, max_pool2d
 from tensorflow.contrib.framework import arg_scope
 
-from rare.core import feature_extractor_pb2
-from rare.core import bidirectional_rnn
-from rare.utils import visualization_utils, shape_utils
+from rare.utils import shape_utils
 
 
 class FeatureExtractor(object):
-  """Abstract class for feature extractor."""
-  __metaclass__ = ABCMeta
-
   def __init__(self,
-               summarize_inputs=False,
+               convnet=None,
                brnn_fn_list=[],
+               summarize_activations=False,
                is_training=True):
-    self._summarize_inputs = summarize_inputs
+    self._convnet = convnet
     self._brnn_fn_list = brnn_fn_list
+    self._summarize_activations = summarize_activations
     self._is_training = is_training
 
   def preprocess(self, resized_inputs, scope=None):
     with tf.variable_scope(scope, 'FeatureExtractorPreprocess', [resized_inputs]):
-      preprocessed_inputs = (2.0 / 255.0) * resized_inputs - 1.0
-    if self._summarize_inputs:
-      tf.summary.image('preprocessed_inputs', preprocessed_inputs, max_outputs=1)
+      preprocessed_inputs = self._convnet.preprocess(resized_inputs, scope)
     return preprocessed_inputs
 
   def extract_features(self, preprocessed_inputs, scope=None):
     with tf.variable_scope(scope, 'FeatureExtractor', [preprocessed_inputs]):
-      feature_maps = self._extract_features(preprocessed_inputs)
+      feature_maps = self._convnet.extract_features(preprocessed_inputs)
 
     if len(self._brnn_fn_list) > 0:
       feature_sequences_list = []
-
       for i, feature_map in enumerate(feature_maps):
         shape_assert = tf.Assert(
           tf.equal(tf.shape(feature_map)[1], 1),
@@ -50,29 +42,5 @@ class FeatureExtractor(object):
           feature_sequence = brnn_object.predict(feature_sequence, scope='BidirectionalRnn_Branch_{}_{}'.format(i, j))
         feature_sequences_list.append(feature_sequence)
 
-      feature_maps = tf.expand_dims(feature_sequences_list, axis=1)
-
+      feature_maps = [tf.expand_dims(fmap, axis=1) for fmap in feature_sequences_list]
     return feature_maps
-
-  @abstractmethod
-  def _extract_features(self, preprocessed_inputs):
-    pass
-
-
-def build(config, is_training):
-  if not isinstance(config, feature_extractor_pb2.FeatureExtractor):
-    raise ValueError('config not of type '
-                     'feature_extractor_pb2.FeatureExtractor')
-  feature_extractor_oneof = config.WhichOneof('feature_extractor_oneof')
-  if feature_extractor_oneof == 'baseline_feature_extractor':
-    from rare.feature_extractors import baseline_feature_extractor
-    return baseline_feature_extractor.build(
-      config.baseline_feature_extractor,
-      is_training
-    )
-  elif feature_extractor_oneof == 'resnet_feature_extractor':
-    from rare.feature_extractors import resnet_feature_extractor
-    return resnet_feature_extractor.build(config.resnet_feature_extractor, is_training)
-  else:
-    raise ValueError('Unknown feature_extractor_oneof: {}'.format(feature_extractor_oneof))
-

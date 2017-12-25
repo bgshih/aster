@@ -49,11 +49,12 @@ import logging
 import tensorflow as tf
 from google.protobuf import text_format
 
-from rare.core import input_reader, input_reader_pb2
-from rare.models import model, model_pb2
-from rare import pipeline_pb2
+from rare.protos import model_pb2
+from rare.protos import pipeline_pb2
+from rare.protos import train_pb2
+from rare.protos import input_reader_pb2
+from rare.builders import input_reader_builder
 from rare import trainer
-from rare import train_pb2
 
 logging.getLogger('tensorflow').propagate = False # avoid logging duplicates
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -158,13 +159,13 @@ def main(_):
       model_config, train_config, input_config = get_configs_from_multiple_files()
 
   model_fn = functools.partial(
-    model.build,
+    model_builder.build,
     model_config=model_config,
     is_training=True
   )
 
   create_input_dict_fn = functools.partial(
-    input_reader.build,
+    input_reader_builder.build,
     input_config
   )
 

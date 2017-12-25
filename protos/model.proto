@@ -1,0 +1,44 @@
+syntax = "proto2";
+package rare.protos;
+
+import "rare/protos/feature_extractor.proto";
+import "rare/protos/hyperparams.proto";
+import "rare/protos/rnn_cell.proto";
+import "rare/protos/label_map.proto";
+import "rare/protos/loss.proto";
+
+message Model {
+  oneof model_oneof {
+    AttentionRecognitionModel attention_recognition_model = 1;
+    CtcRecognitionModel ctc_recognition_model = 2;
+  }
+}
+
+message BahdanauAttentionPredictor {
+  optional RnnCell rnn_cell = 1;
+  optional int32 num_attention_units = 2 [default=128];
+  optional int32 max_num_steps = 3 [default=40];
+  optional Regularizer rnn_regularizer = 4;
+  // hyperparams for the memory fully-connected layer
+  optional Hyperparams fc_hyperparams = 5;
+}
+
+message AttentionPredictor {
+  oneof attention_predictor_oneof {
+    BahdanauAttentionPredictor bahdanau_attention_predictor = 1;
+  }
+}
+
+message AttentionRecognitionModel {
+  optional FeatureExtractor feature_extractor = 1;
+  optional AttentionPredictor attention_predictor = 2;
+  optional LabelMap label_map = 3;
+  optional Loss loss = 4;
+}
+
+message CtcRecognitionModel {
+  optional FeatureExtractor feature_extractor = 1;
+  // hyperparams for the output fully-connected layer
+  optional Hyperparams fc_hyperparams = 2;
+  optional LabelMap label_map = 3;
+}

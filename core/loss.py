@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 from rare.utils import shape_utils
-from rare.core import loss_pb2
 
 
 class SequenceCrossEntropyLoss(object):
@@ -44,16 +43,3 @@ class SequenceCrossEntropyLoss(object):
           loss,
           tf.cast(tf.maximum(batch_size, 1), tf.float32))
     return loss
-
-def build(config):
-  if not isinstance(config, loss_pb2.Loss):
-    raise ValueError('config not of type loss_pb2.Loss')
-  loss_oneof = config.WhichOneof('loss_oneof')
-  if loss_oneof == 'sequence_cross_entropy_loss':
-    sequence_cross_entropy_loss_config = config.sequence_cross_entropy_loss
-    return SequenceCrossEntropyLoss(
-      sequence_normalize=sequence_cross_entropy_loss_config.sequence_normalize,
-      sample_normalize=sequence_cross_entropy_loss_config.sample_normalize
-    )
-  else:
-    raise ValueError('Unknown loss_oneof: {}'.format(loss_oneof))

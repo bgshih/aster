@@ -1,0 +1,39 @@
+syntax = "proto2";
+package rare.protos;
+
+import "rare/protos/hyperparams.proto";
+
+message Convnet {
+  oneof convnet_oneof {
+    CrnnNet crnn_net = 1;
+    ResNet res_net = 2;
+  }
+}
+
+message CrnnNet {
+  enum NetType {
+    SINGLE_BRANCH = 0;
+    TWO_BRANCHES = 1;
+    THREE_BRANCHES = 2;
+  }
+  optional NetType net_type = 1 [default = SINGLE_BRANCH];
+  optional Hyperparams conv_hyperparams = 2;
+  optional bool summarize_activations = 3 [default=false];
+}
+
+message ResNet {
+  enum NetType {
+    SINGLE_BRANCH = 0;
+    TWO_BRANCHES = 1;
+    THREE_BRANCHES = 2;
+  }
+  enum NetDepth {
+    RESNET_30 = 0;
+    RESNET_50 = 1;
+    RESNET_100 = 2;
+  }
+  optional NetType net_type = 1 [default = SINGLE_BRANCH];
+  optional NetDepth net_depth = 2 [default = RESNET_50];
+  optional Hyperparams conv_hyperparams = 3;
+  optional bool summarize_activations = 4 [default=false];
+}
