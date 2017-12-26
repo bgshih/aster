@@ -21,6 +21,7 @@ message BahdanauAttentionPredictor {
   optional Regularizer rnn_regularizer = 4;
   // hyperparams for the memory fully-connected layer
   optional Hyperparams fc_hyperparams = 5;
+  optional bool multi_attention = 6 [default = false];
 }
 
 message AttentionPredictor {

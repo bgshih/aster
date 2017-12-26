@@ -17,12 +17,14 @@ class BahdanauAttentionPredictor(object):
                fc_hyperparams=None,
                num_attention_units=None,
                max_num_steps=None,
+               multi_attention=False,
                is_training=True):
     self._rnn_cell = rnn_cell
     self._rnn_regularizer = rnn_regularizer
     self._fc_hyperparams = fc_hyperparams
     self._num_attention_units = num_attention_units
     self._max_num_steps = max_num_steps
+    self._multi_attention = multi_attention
     self._is_training = is_training
 
   def predict(self,
@@ -38,18 +40,33 @@ class BahdanauAttentionPredictor(object):
 
     with tf.variable_scope(scope, 'Predict', feature_maps):
       feature_sequences = [tf.squeeze(map, axis=1) for map in feature_maps]
-      memory = tf.concat(feature_sequences, axis=1)
-      batch_size = shape_utils.combined_static_and_dynamic_shape(memory)[0]
-      embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
-      attention_mechanism = seq2seq.BahdanauAttention(
-        self._num_attention_units,
-        memory,
-        memory_sequence_length=None) # all full lenghts
+      if self._multi_attention:
+        attention_mechanism = []
+        for i, feature_sequence in enumerate(feature_sequences):
+          memory = feature_sequence
+          attention_mechanism.append(
+            seq2seq.BahdanauAttention(
+              self._num_attention_units,
+              memory,
+              memory_sequence_length=None
+            )
+          )
+      else:
+        memory = tf.concat(feature_sequences, axis=1)
+        attention_mechanism = seq2seq.BahdanauAttention(
+          self._num_attention_units,
+          memory,
+          memory_sequence_length=None
+        )
+
       attention_cell = seq2seq.AttentionWrapper(
         self._rnn_cell,
         attention_mechanism,
         output_attention=False)
 
+      batch_size = shape_utils.combined_static_and_dynamic_shape(feature_maps[0])[0]
+      embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
+      
       if self._is_training:
         helper = seq2seq.TrainingHelper(
           embedding_fn(decoder_inputs),

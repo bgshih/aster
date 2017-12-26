@@ -40,6 +40,7 @@ def _build_attention_predictor(config, is_training):
       fc_hyperparams=fc_hyperparams_object,
       num_attention_units=predictor_config.num_attention_units,
       max_num_steps=predictor_config.max_num_steps,
+      multi_attention=predictor_config.multi_attention,
       is_training=is_training
     )
     return attention_predictor_object
