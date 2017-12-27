@@ -1,0 +1,21 @@
+syntax = "proto2";
+package rare.protos;
+
+
+message Predictor {
+  oneof predictor_oneof {
+    BahdanauAttentionPredictor bahdanau_attention_predictor = 1;
+  }
+}
+
+message BahdanauAttentionPredictor {
+  optional RnnCell rnn_cell = 1;
+  optional Regularizer rnn_regularizer = 2;
+  optional int32 num_attention_units = 3 [default=128];
+  optional int32 max_num_steps = 4 [default=40];
+  optional bool multi_attention = 5 [default = false];
+  optional int32 beam_width = 6 [default = 1];
+  optional bool reverse = 7 [default = false];
+  optional LabelMap label_map = 8;
+  optional Loss loss = 9;
+}

@@ -27,3 +27,4 @@ _oplib = _load_oplib(FLAGS.oplib_name)
 
 # map C++ operators to python objects
 string_filtering = _oplib.string_filtering
+string_reverse = _oplib.string_reverse

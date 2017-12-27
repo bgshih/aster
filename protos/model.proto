@@ -14,22 +14,6 @@ message Model {
   }
 }
 
-message BahdanauAttentionPredictor {
-  optional RnnCell rnn_cell = 1;
-  optional int32 num_attention_units = 2 [default=128];
-  optional int32 max_num_steps = 3 [default=40];
-  optional Regularizer rnn_regularizer = 4;
-  // hyperparams for the memory fully-connected layer
-  optional Hyperparams fc_hyperparams = 5;
-  optional bool multi_attention = 6 [default = false];
-}
-
-message AttentionPredictor {
-  oneof attention_predictor_oneof {
-    BahdanauAttentionPredictor bahdanau_attention_predictor = 1;
-  }
-}
-
 message AttentionRecognitionModel {
   optional FeatureExtractor feature_extractor = 1;
   optional AttentionPredictor attention_predictor = 2;

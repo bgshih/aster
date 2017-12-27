@@ -37,12 +37,12 @@ def _extract_prediction_tensors(model,
   recognitions = model.postprocess(predictions_dict)
 
   tensor_dict = {
-      'original_image': original_image,
-      'original_image_shape': original_image_shape,
-      'preprocessed_image_shape': preprocessed_image_shape,
-      'filename': preprocessed_input_dict[fields.InputDataFields.filename],
-      'groundtruth_text': input_dict[fields.InputDataFields.groundtruth_text],
-      'recognition_text': recognitions['text'][0]
+    'original_image': original_image,
+    'original_image_shape': original_image_shape,
+    'preprocessed_image_shape': preprocessed_image_shape,
+    'filename': preprocessed_input_dict[fields.InputDataFields.filename],
+    'groundtruth_text': input_dict[fields.InputDataFields.groundtruth_text],
+    'recognition_text': recognitions['text'][0]
   }
   return tensor_dict
 
