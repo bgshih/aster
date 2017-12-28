@@ -36,15 +36,14 @@ class MultiPredictorsRecognitionModel(model.Model):
 
   def loss(self, predictions_dict, scope=None):
     with tf.variable_scope(scope, 'Loss', list(predictions_dict.values())):
-      losses = []
+      losses_dict = {}
       for name, predictor in self._predictors_dict.items():
         predictor_loss = predictor.loss({
           k.split('/')[1] : v
           for k, v in predictions_dict.items() if k.startswith('{}/'.format(name))
         }, scope='{}/Loss'.format(name))
-        losses.append(predictor_loss)
-      loss_tensor = tf.add_n(losses)
-    return loss_tensor
+        losses_dict[name] = predictor_loss
+    return losses_dict
 
   def postprocess(self, predictions_dict, scope=None):
     with tf.variable_scope(scope, 'Postprocess', list(predictions_dict.values())):

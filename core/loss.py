@@ -4,9 +4,13 @@ from rare.utils import shape_utils
 
 
 class SequenceCrossEntropyLoss(object):
-  def __init__(self, sequence_normalize=None, sample_normalize=None):
+  def __init__(self,
+               sequence_normalize=None,
+               sample_normalize=None,
+               weight=None):
     self._sequence_normalize = sequence_normalize
     self._sample_normalize = sample_normalize
+    self._weight = weight
 
   def __call__(self, logits, labels, lengths, scope=None):
     """
@@ -42,4 +46,6 @@ class SequenceCrossEntropyLoss(object):
         loss = tf.truediv(
           loss,
           tf.cast(tf.maximum(batch_size, 1), tf.float32))
+      if self._weight:
+        loss = loss * self._weight
     return loss

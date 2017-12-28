@@ -12,7 +12,8 @@ def build(config):
     sequence_cross_entropy_loss_config = config.sequence_cross_entropy_loss
     return loss.SequenceCrossEntropyLoss(
       sequence_normalize=sequence_cross_entropy_loss_config.sequence_normalize,
-      sample_normalize=sequence_cross_entropy_loss_config.sample_normalize
+      sample_normalize=sequence_cross_entropy_loss_config.sample_normalize,
+      weight=sequence_cross_entropy_loss_config.weight
     )
   elif loss_oneof == 'tfseq2seq_loss':
     raise NotImplementedError

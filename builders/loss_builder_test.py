@@ -12,6 +12,7 @@ class LossTest(tf.test.TestCase):
       sequence_cross_entropy_loss {
         sequence_normalize: false
         sample_normalize: true
+        weight: 0.5
       }
     """
     loss_proto = loss_pb2.Loss()

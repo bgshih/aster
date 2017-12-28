@@ -8,6 +8,7 @@ message Loss {
 }
 
 message SequenceCrossEntropyLoss {
-  optional bool sequence_normalize = 1 [default=false];
-  optional bool sample_normalize = 2 [default=true];
+  optional bool sequence_normalize = 1 [default = false];
+  optional bool sample_normalize = 2 [default = true];
+  optional float weight = 3 [default = 1.0];
 }
