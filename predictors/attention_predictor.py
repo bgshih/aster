@@ -5,6 +5,8 @@ import tensorflow as tf
 from tensorflow.contrib import seq2seq
 from rare.core import predictor
 from rare.core import loss
+from rare.utils import shape_utils
+from rare.c_ops import ops
 
 
 class BahdanauAttentionPredictor(predictor.Predictor):
@@ -21,6 +23,7 @@ class BahdanauAttentionPredictor(predictor.Predictor):
                label_map=None,
                loss=None,
                is_training=True):
+    super(BahdanauAttentionPredictor, self).__init__(is_training)
     self._rnn_cell = rnn_cell
     self._rnn_regularizer = rnn_regularizer
     self._num_attention_units = num_attention_units
@@ -30,7 +33,6 @@ class BahdanauAttentionPredictor(predictor.Predictor):
     self._reverse = reverse
     self._label_map = label_map
     self._loss = loss
-    self._is_training = is_training
 
     if not self._is_training and not self._beam_width > 0:
       raise ValueError('Beam width must be > 0 during inference')
@@ -54,7 +56,7 @@ class BahdanauAttentionPredictor(predictor.Predictor):
     with tf.variable_scope(scope, 'Predict', feature_maps):
       def _build_attention_mechanism(memory):
         if not self._is_training:
-          memory = tf.tile_batch(memory, multiplier=self._beam_width)
+          memory = seq2seq.tile_batch(memory, multiplier=self._beam_width)
         return seq2seq.BahdanauAttention(
           self._num_attention_units,
           memory,
@@ -77,17 +79,17 @@ class BahdanauAttentionPredictor(predictor.Predictor):
         attention_mechanism,
         output_attention=False)
       batch_size = shape_utils.combined_static_and_dynamic_shape(feature_maps[0])[0]
-      embedding_fn = functools.partial(tf.one_hot, depth=num_classes)
+      embedding_fn = functools.partial(tf.one_hot, depth=self.num_classes)
       output_layer = tf.layers.Dense(
-        num_classes,
+        self.num_classes,
         activation=None,
         use_bias=True,
         kernel_initializer=tf.variance_scaling_initializer(),
         bias_initializer=tf.zeros_initializer())
       if self._is_training:
         train_helper = seq2seq.TrainingHelper(
-          embedding_fn(decoder_inputs),
-          sequence_length=decoder_inputs_lengths,
+          embedding_fn(self._groundtruth_dict['decoder_inputs']),
+          sequence_length=self._groundtruth_dict['decoder_lengths'],
           time_major=False)
         attention_decoder = seq2seq.BasicDecoder(
           cell=attention_cell,
@@ -95,13 +97,12 @@ class BahdanauAttentionPredictor(predictor.Predictor):
           initial_state=attention_cell.zero_state(batch_size, tf.float32),
           output_layer=output_layer)
       else:
-        batch_size = batch_size * self._beam_width
         attention_decoder = seq2seq.BeamSearchDecoder(
           cell=attention_cell,
           embedding=embedding_fn,
-          start_tokens=tf.tile([start_label], [batch_size]),
-          end_token=end_label,
-          initial_state=attention_cell.zero_state(batch_size, tf.float32),
+          start_tokens=tf.tile([self.start_label], [batch_size * self._beam_width]),
+          end_token=self.end_label,
+          initial_state=attention_cell.zero_state(batch_size * self._beam_width, tf.float32),
           beam_width=self._beam_width,
           output_layer=output_layer,
           length_penalty_weight=0.0)
@@ -122,16 +123,22 @@ class BahdanauAttentionPredictor(predictor.Predictor):
         assert isinstance(outputs, seq2seq.BasicDecoderOutput)
         outputs_dict = {
           'labels': outputs.sample_id,
-          'logits': outputs.rnn_output
+          'logits': outputs.rnn_output,
         }
       else:
-        assert isinstance(outputs, seq2seq.BeamSearchDecoderOutput)
+        assert isinstance(outputs, seq2seq.FinalBeamSearchDecoderOutput)
+        prediction_labels = outputs.beam_search_decoder_output.predicted_ids[:,:,0]
+        prediction_lengths = output_lengths[:,0]
+        prediction_scores = tf.gather_nd(
+          outputs.beam_search_decoder_output.scores[:,:,0],
+          tf.stack([tf.range(batch_size), prediction_lengths-1], axis=1)
+        )
         outputs_dict = {
-          'labels': outputs.predicted_ids,
-          'scores': outputs.scores
+          'labels': prediction_labels,
+          'scores': prediction_scores,
+          'lengths': prediction_lengths
         }
-
-    return outputs_dict, output_lengths
+    return outputs_dict
 
   def loss(self, predictions_dict, scope=None):
     assert 'logits' in predictions_dict
@@ -147,7 +154,7 @@ class BahdanauAttentionPredictor(predictor.Predictor):
     with tf.name_scope(scope, 'ProvideGroundtruth', [groundtruth_text]):
       batch_size = shape_utils.combined_static_and_dynamic_shape(groundtruth_text)[0]
       if self._reverse:
-        groundtruth_text = ops.reverse_strings(groundtruth_text)
+        groundtruth_text = ops.string_reverse(groundtruth_text)
       text_labels, text_lengths = self._label_map.text_to_labels(
         groundtruth_text,
         pad_value=self.end_label,
@@ -155,7 +162,7 @@ class BahdanauAttentionPredictor(predictor.Predictor):
       start_labels = tf.fill([batch_size, 1], tf.constant(self.start_label, tf.int64))
       end_labels = tf.fill([batch_size, 1], tf.constant(self.end_label, tf.int64))
       decoder_inputs = tf.concat([start_labels, start_labels, text_labels], axis=1)
-      decoder_targets = tf.concat([start_labels, text_labels, end_labels])
+      decoder_targets = tf.concat([start_labels, text_labels, end_labels], axis=1)
       decoder_lengths = text_lengths + 2
       self._groundtruth_dict['decoder_inputs'] = decoder_inputs
       self._groundtruth_dict['decoder_targets'] = decoder_targets

@@ -7,8 +7,13 @@ import tensorflow as tf
 class Predictor(object):
   __metaclass__ = ABCMeta
 
-  def __init__(self, is_training):
+  def __init__(self, is_training=True):
     self._is_training = is_training
+    self._groundtruth_dict = {}
+
+  @property
+  def name(self):
+    return self._name
 
   @abstractmethod
   def predict(self, feature_maps, scope=None):

@@ -12,6 +12,7 @@ class Model(object):
                is_training=True):
     self._feature_extractor = feature_extractor
     self._is_training = is_training
+    self._predictors = {}
     self._groundtruth_dict = {}
 
   def preprocess(self, resized_inputs, scope=None):

@@ -1,11 +1,17 @@
 syntax = "proto2";
 package rare.protos;
 
+import "rare/protos/rnn_cell.proto";
+import "rare/protos/hyperparams.proto";
+import "rare/protos/label_map.proto";
+import "rare/protos/loss.proto";
+
 
 message Predictor {
   oneof predictor_oneof {
     BahdanauAttentionPredictor bahdanau_attention_predictor = 1;
   }
+  optional string name = 2 [default = 'Predictor'];
 }
 
 message BahdanauAttentionPredictor {

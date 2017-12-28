@@ -2,28 +2,16 @@ syntax = "proto2";
 package rare.protos;
 
 import "rare/protos/feature_extractor.proto";
-import "rare/protos/hyperparams.proto";
-import "rare/protos/rnn_cell.proto";
-import "rare/protos/label_map.proto";
-import "rare/protos/loss.proto";
+import "rare/protos/predictor.proto";
+
 
 message Model {
   oneof model_oneof {
-    AttentionRecognitionModel attention_recognition_model = 1;
-    CtcRecognitionModel ctc_recognition_model = 2;
+    MultiPredictorsRecognitionModel multi_predictors_recognition_model = 1;
   }
 }
 
-message AttentionRecognitionModel {
+message MultiPredictorsRecognitionModel {
   optional FeatureExtractor feature_extractor = 1;
-  optional AttentionPredictor attention_predictor = 2;
-  optional LabelMap label_map = 3;
-  optional Loss loss = 4;
-}
-
-message CtcRecognitionModel {
-  optional FeatureExtractor feature_extractor = 1;
-  // hyperparams for the output fully-connected layer
-  optional Hyperparams fc_hyperparams = 2;
-  optional LabelMap label_map = 3;
+  repeated Predictor predictor = 2;
 }
