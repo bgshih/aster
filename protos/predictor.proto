@@ -8,13 +8,13 @@ import "rare/protos/loss.proto";
 
 
 message Predictor {
+  optional string name = 1 [default = "Predictor"];
   oneof predictor_oneof {
-    BahdanauAttentionPredictor bahdanau_attention_predictor = 1;
+    AttentionPredictor attention_predictor = 2;
   }
-  optional string name = 2 [default = 'Predictor'];
 }
 
-message BahdanauAttentionPredictor {
+message AttentionPredictor {
   optional RnnCell rnn_cell = 1;
   optional Regularizer rnn_regularizer = 2;
   optional int32 num_attention_units = 3 [default=128];
@@ -24,4 +24,11 @@ message BahdanauAttentionPredictor {
   optional bool reverse = 7 [default = false];
   optional LabelMap label_map = 8;
   optional Loss loss = 9;
+  optional LanguageModelRnnCell lm_rnn_cell = 10;
+  optional bool sync = 11 [default = false];
+}
+
+message LanguageModelRnnCell {
+  repeated RnnCell rnn_cell = 1;
+  optional string restore_path = 2 [default = ""];
 }
