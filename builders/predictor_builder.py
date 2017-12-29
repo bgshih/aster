@@ -7,7 +7,7 @@ from rare.builders import label_map_builder
 from rare.builders import loss_builder
 from rare.builders import hyperparams_builder
 from rare.predictors import attention_predictor
-from rare.predictors import attention_predictor_with_lm
+# from rare.predictors import attention_predictor_with_lm
 
 
 def build(config, is_training):
@@ -21,26 +21,25 @@ def build(config, is_training):
     rnn_regularizer_object = hyperparams_builder._build_regularizer(predictor_config.rnn_regularizer)
     label_map_object = label_map_builder.build(predictor_config.label_map)
     loss_object = loss_builder.build(predictor_config.loss)
-    kwargs = {
-      'rnn_cell': rnn_cell_object,
-      'rnn_regularizer': rnn_regularizer_object,
-      'num_attention_units': predictor_config.num_attention_units,
-      'max_num_steps': predictor_config.max_num_steps,
-      'multi_attention': predictor_config.multi_attention,
-      'beam_width': predictor_config.beam_width,
-      'reverse': predictor_config.reverse,
-      'label_map': label_map_object,
-      'loss': loss_object,
-      'is_training': is_training,
-      'sync': predictor_config.sync
-    }
     if not predictor_config.HasField('lm_rnn_cell'):
-      predictor_class = attention_predictor.AttentionPredictor
+      lm_rnn_cell_object = None
     else:
-      predictor_class = attention_predictor_with_lm.AttentionPredictorWithLanguageModel
-      kwargs['lm_rnn_cell'] = _build_language_model_rnn_cell(predictor_config.lm_rnn_cell)
-
-    attention_predictor_object = predictor_class(**kwargs)
+      lm_rnn_cell_object = _build_language_model_rnn_cell(predictor_config.lm_rnn_cell)
+      
+    attention_predictor_object = attention_predictor.AttentionPredictor(
+      rnn_cell=rnn_cell_object,
+      rnn_regularizer=rnn_regularizer_object,
+      num_attention_units=predictor_config.num_attention_units,
+      max_num_steps=predictor_config.max_num_steps,
+      multi_attention=predictor_config.multi_attention,
+      beam_width=predictor_config.beam_width,
+      reverse=predictor_config.reverse,
+      label_map=label_map_object,
+      loss=loss_object,
+      sync=predictor_config.sync,
+      lm_rnn_cell=lm_rnn_cell_object,
+      is_training=is_training
+    )
     return attention_predictor_object
   else:
     raise ValueError('Unknown predictor_oneof: {}'.format(predictor_oneof))
