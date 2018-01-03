@@ -11,7 +11,7 @@ import "rare/protos/model.proto";
 message TrainEvalPipelineConfig {
   optional Model model = 1;
   optional TrainConfig train_config = 2;
-  optional InputReader train_input_reader = 3;
+  repeated InputReader train_input_reader = 3;
   optional EvalConfig eval_config = 4;
   optional InputReader eval_input_reader = 5;
 }

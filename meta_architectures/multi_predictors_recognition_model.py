@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.contrib import seq2seq
 
 from rare.core import model
+from rare.core import standard_fields as fields
 from rare.utils import shape_utils
 
 
@@ -60,10 +61,10 @@ class MultiPredictorsRecognitionModel(model.Model):
         recognition_text_list, recognition_scores_list)
     return aggregated_recognition_dict
 
-  def provide_groundtruth(self, groundtruth_text_list, scope=None):
-    with tf.variable_scope(scope, 'ProvideGroundtruth', [groundtruth_text_list]):
-      batch_size = len(groundtruth_text_list)
-      groundtruth_text = tf.stack(groundtruth_text_list, axis=0)
+  def provide_groundtruth(self, groundtruth_lists, scope=None):
+    with tf.variable_scope(scope, 'ProvideGroundtruth', list(groundtruth_lists.values())):
+      groundtruth_text = tf.stack(
+        groundtruth_lists[fields.InputDataFields.groundtruth_text], axis=0)
       for name, predictor in self._predictors_dict.items():
         predictor.provide_groundtruth(
           groundtruth_text,

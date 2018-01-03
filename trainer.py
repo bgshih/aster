@@ -29,13 +29,19 @@ def _create_input_queue(batch_size_per_clone, create_tensor_dict_fn,
   return input_queue
 
 
-def _get_inputs(input_queue):
-  read_data_list = input_queue.dequeue()
-  def _extract_images_and_targets(read_data):
-    image = read_data[fields.InputDataFields.image]
-    transcript = read_data[fields.InputDataFields.groundtruth_text]
-    return image, transcript
-  return zip(*map(_extract_images_and_targets, read_data_list))
+def _get_inputs_multiqueues(input_queue_list):
+  images_list = []
+  transcript_list = []
+  keypoints_list = []
+  for input_queue in input_queue_list:
+    read_data_list = input_queue.dequeue()
+    images_list.extend([read_data[fields.InputDataFields.image] for read_data in read_data_list])
+    transcript_list.extend([read_data[fields.InputDataFields.groundtruth_text] for read_data in read_data_list])
+    keypoints_list.extend([read_data[fields.InputDataFields.groundtruth_keypoints] for read_data in read_data_list])
+  return images_list, {
+    fields.InputDataFields.groundtruth_text: transcript_list,
+    fields.InputDataFields.groundtruth_keypoints: keypoints_list
+  }
 
 
 def _create_losses(input_queue, create_model_fn):
@@ -47,12 +53,14 @@ def _create_losses(input_queue, create_model_fn):
   model = create_model_fn()
 
   # get inputs
-  images_list, groundtruth_text_list = _get_inputs(input_queue)
+  if not isinstnace(input_queue, (list, tuple)):
+    input_queue = [input_queue]
+  images_list, groundtruth_lists = _get_inputs_multiqueues(input_queue)
   images = tf.stack(images_list, axis=0)
   preprocessed_images = model.preprocess(images)
 
   # provide groundtruth
-  model.provide_groundtruth(groundtruth_text_list)
+  model.provide_groundtruth(groundtruth_lists)
   predictions_dict = model.predict(preprocessed_images)
 
   losses_dict = model.loss(predictions_dict)
@@ -60,7 +68,7 @@ def _create_losses(input_queue, create_model_fn):
     tf.losses.add_loss(loss_tensor)
 
 
-def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
+def train(create_tensor_dict_fn_list, create_model_fn, train_config, master, task,
           num_clones, worker_replicas, clone_on_cpu, ps_tasks, worker_job_name,
           is_chief, train_dir):
   """Training function for models.
@@ -101,21 +109,23 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
 
     with tf.device(deploy_config.inputs_device()), \
          tf.name_scope('Input'):
-      input_queue = _create_input_queue(
-        train_config.batch_size // num_clones,
-        create_tensor_dict_fn,
-        train_config.batch_queue_capacity,
-        train_config.num_batch_queue_threads,
-        train_config.prefetch_queue_capacity,
-        data_augmentation_options
-      )
+      input_queue_list = []
+      for i, create_tensor_dict_fn in enumerate(create_tensor_dict_fn_list):
+        input_queue_list.append(_create_input_queue(
+          train_config.batch_size[i] // num_clones,
+          create_tensor_dict_fn,
+          train_config.batch_queue_capacity,
+          train_config.num_batch_queue_threads,
+          train_config.prefetch_queue_capacity,
+          data_augmentation_options
+        ))
 
     # Gather initial summaries.
     summaries = set(tf.get_collection(tf.GraphKeys.SUMMARIES))
     global_summaries = set([])
 
     model_fn = functools.partial(_create_losses, create_model_fn=create_model_fn)
-    clones = model_deploy.create_clones(deploy_config, model_fn, [input_queue])
+    clones = model_deploy.create_clones(deploy_config, model_fn, [input_queue_list])
     first_clone_scope = clones[0].scope
 
     # Gather update_ops from the first clone. These contain, for example,

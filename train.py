@@ -165,10 +165,10 @@ def main(_):
     is_training=True
   )
 
-  create_input_dict_fn = functools.partial(
-    input_reader_builder.build,
-    input_config
-  )
+  create_input_dict_fn_list = [
+    functools.partial(input_reader_builder.build, inpcfg)
+    for inpcfg in input_config
+  ]
 
   env = json.loads(os.environ.get('TF_CONFIG', '{}'))
   cluster_data = env.get('cluster', None)
@@ -207,7 +207,7 @@ def main(_):
     is_chief = (task_info.type == 'master')
     master = server.target
 
-  trainer.train(create_input_dict_fn, model_fn, train_config, master, task,
+  trainer.train(create_input_dict_fn_list, model_fn, train_config, master, task,
                 FLAGS.num_clones, worker_replicas, FLAGS.clone_on_cpu, ps_tasks,
                 worker_job_name, is_chief, train_dir)
 

@@ -5,6 +5,7 @@ class InputDataFields(object):
   source_id = 'source_id'
   filename = 'filename'
   groundtruth_text = 'groundtruth_text'
+  groundtruth_keypoints = 'groundtruth_keypoints'
 
 
 class TfExampleFields(object):

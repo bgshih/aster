@@ -7,7 +7,7 @@ import "rare/protos/preprocessor.proto";
 // Message for configuring DetectionModel training jobs (train.py).
 message TrainConfig {
   // Input queue batch size.
-  optional uint32 batch_size = 1 [default=32];
+  repeated uint32 batch_size = 1 [default=32];
 
   // Data augmentation options.
   repeated PreprocessingStep data_augmentation_options = 2;
