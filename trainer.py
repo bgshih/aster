@@ -11,21 +11,33 @@ from rare.utils import variables_helper
 from rare.utils import model_deploy
 
 
-def _create_input_queue(batch_size_per_clone, create_tensor_dict_fn,
+def _create_input_queue(batch_size_per_clone, create_tensor_dict_fn_list,
                         batch_queue_capacity, num_batch_queue_threads,
                         prefetch_queue_capacity, data_augmentation_options):
-  tensor_dict = create_tensor_dict_fn()
-  tensor_dict[fields.InputDataFields.image] = tf.to_float(
-    tensor_dict[fields.InputDataFields.image]
-  )
-  tensor_dict = preprocessor.preprocess(tensor_dict, data_augmentation_options)
-  input_queue = batcher.BatchQueue(
-    tensor_dict,
-    batch_size=batch_size_per_clone,
-    batch_queue_capacity=batch_queue_capacity,
-    num_batch_queue_threads=num_batch_queue_threads,
-    prefetch_queue_capacity=prefetch_queue_capacity
-  )
+  tensor_dict_list = []
+  for create_tensor_dict_fn in create_tensor_dict_fn_list:
+    tensor_dict = create_tensor_dict_fn()
+    tensor_dict[fields.InputDataFields.image] = tf.to_float(
+      tensor_dict[fields.InputDataFields.image]
+    )
+    tensor_dict = preprocessor.preprocess(tensor_dict, data_augmentation_options)
+    tensor_dict_list.append(tensor_dict)
+  
+  if len(tensor_dict_list) == 1:
+    input_queue = batcher.BatchQueue(
+      tensor_dict_list[0],
+      batch_size=batch_size_per_clone,
+      batch_queue_capacity=batch_queue_capacity,
+      num_batch_queue_threads=num_batch_queue_threads,
+      prefetch_queue_capacity=prefetch_queue_capacity
+    )
+  else:
+    input_queue = batcher.BatchJoinQueue(
+      tensor_dict_list,
+      batch_size=batch_size_per_clone,
+      batch_queue_capacity=batch_queue_capacity,
+      prefetch_queue_capacity=prefetch_queue_capacity
+    )
   return input_queue
 
 
@@ -60,12 +72,12 @@ def _create_losses(input_queue, create_model_fn):
     tf.losses.add_loss(loss_tensor)
 
 
-def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
+def train(create_tensor_dict_fn_list, create_model_fn, train_config, master, task,
           num_clones, worker_replicas, clone_on_cpu, ps_tasks, worker_job_name,
           is_chief, train_dir):
   """Training function for models.
   Args:
-    create_tensor_dict_fn: a function to create a tensor input dictionary.
+    create_tensor_dict_fn_list: a list of functions to create a tensor input dictionary.
     create_model_fn: a function that creates a DetectionModel and generates
                      losses.
     train_config: a train_pb2.TrainConfig protobuf.
@@ -103,7 +115,7 @@ def train(create_tensor_dict_fn, create_model_fn, train_config, master, task,
          tf.name_scope('Input'):
       input_queue = _create_input_queue(
         train_config.batch_size // num_clones,
-        create_tensor_dict_fn,
+        create_tensor_dict_fn_list,
         train_config.batch_queue_capacity,
         train_config.num_batch_queue_threads,
         train_config.prefetch_queue_capacity,

@@ -119,3 +119,35 @@ class BatchQueue(object):
       tensor_dict_list.append(tensor_dict)
 
     return tensor_dict_list
+
+
+class BatchJoinQueue(BatchQueue):
+ 
+ def __init__(self, tensor_dict_list, batch_size, batch_queue_capacity,
+              prefetch_queue_capacity):
+    static_shapes = collections.OrderedDict(
+        {key: tensor.get_shape() for key, tensor in tensor_dict_list[0].items()})
+    for tensor_dict in tensor_dict_list:
+      for key, tensor in tensor_dict.items():
+        if tensor.get_shape() != static_shapes[key]:
+          raise ValueError('tensor_dict static shape mismatch')
+
+    all_tensors_list = []
+    for tensor_dict in tensor_dict_list:
+      # Remember runtime shapes to unpad tensors after batching.
+      runtime_shapes = collections.OrderedDict(
+          {(key + rt_shape_str): tf.shape(tensor)
+          for key, tensor in tensor_dict.items()})
+      all_tensors = tensor_dict
+      all_tensors.update(runtime_shapes)
+      all_tensors_list.append(all_tensors)
+    
+    batched_tensors = tf.train.batch_join(
+        all_tensors_list,
+        batch_size=batch_size,
+        capacity=batch_queue_capacity,
+        dynamic_pad=True)
+    self._queue = prefetcher.prefetch(batched_tensors,
+                                      prefetch_queue_capacity)
+    self._static_shapes_list = static_shapes
+    self._batch_size = batch_size
