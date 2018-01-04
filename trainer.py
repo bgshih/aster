@@ -53,7 +53,7 @@ def _create_losses(input_queue, create_model_fn):
   model = create_model_fn()
 
   # get inputs
-  if not isinstnace(input_queue, (list, tuple)):
+  if not isinstance(input_queue, (list, tuple)):
     input_queue = [input_queue]
   images_list, groundtruth_lists = _get_inputs_multiqueues(input_queue)
   images = tf.stack(images_list, axis=0)

@@ -20,3 +20,4 @@ class TfExampleFields(object):
   transcript = 'image/transcript'
   lexicon = 'image/lexicon'
   lexicon_2 = 'image/lexicon_2'
+  keypoints = 'image/keypoints'

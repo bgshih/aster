@@ -24,6 +24,8 @@ class TfExampleDecoder(object):
         tf.FixedLenFeature((), tf.int64, default_value=1),
       fields.TfExampleFields.transcript: \
         tf.FixedLenFeature((), tf.string, default_value=''),
+      fields.TfExampleFields.keypoints: \
+        tf.VarLenFeature(tf.float32),
     }
     self.items_to_handlers = {
       fields.InputDataFields.image: \
@@ -35,7 +37,9 @@ class TfExampleDecoder(object):
       fields.InputDataFields.filename: \
         slim_example_decoder.Tensor(fields.TfExampleFields.filename),
       fields.InputDataFields.groundtruth_text: \
-        slim_example_decoder.Tensor(fields.TfExampleFields.transcript)
+        slim_example_decoder.Tensor(fields.TfExampleFields.transcript),
+      fields.InputDataFields.groundtruth_keypoints: \
+        slim_example_decoder.Tensor(fields.TfExampleFields.keypoints)
     }
 
   def Decode(self, tf_example_string_tensor):
