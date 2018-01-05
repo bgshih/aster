@@ -144,6 +144,23 @@ class OptimizerBuilderTest(tf.test.TestCase):
     optimizer_object = optimizer_builder.build(optimizer_proto, global_summaries)
     self.assertTrue(isinstance(optimizer_object, tf.train.AdamOptimizer))
 
+  def testBuildNadamOptimizer(self):
+    optimizer_text_proto = """
+      nadam_optimizer: {
+        learning_rate: {
+          constant_learning_rate {
+            learning_rate: 0.002
+          }
+        }
+      }
+      use_moving_average: false
+    """
+    global_summaries = set([])
+    optimizer_proto = optimizer_pb2.Optimizer()
+    text_format.Merge(optimizer_text_proto, optimizer_proto)
+    optimizer_object = optimizer_builder.build(optimizer_proto, global_summaries)
+    self.assertTrue(isinstance(optimizer_object, tf.contrib.opt.NadamOptimizer))
+
   def testBuildMovingAverageOptimizer(self):
     optimizer_text_proto = """
       adam_optimizer: {

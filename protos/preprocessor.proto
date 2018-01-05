@@ -1,6 +1,9 @@
 syntax = "proto2";
 package rare.protos;
 
+import "rare/protos/label_map.proto";
+
+
 message PreprocessingStep {
   oneof preprocessing_step {
     ResizeImageRandomMethod resize_image_random_method = 1;
@@ -89,5 +92,5 @@ message RgbToGray {
 
 message StringFiltering {
   optional bool lower_case = 1 [default=false];
-  optional string include_charset = 2 [default=""];
+  optional CharacterSet include_charset = 2;
 }

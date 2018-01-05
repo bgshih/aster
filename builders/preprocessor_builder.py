@@ -2,6 +2,7 @@ import tensorflow as tf
 
 from rare.core import preprocessor
 from rare.protos import preprocessor_pb2
+from rare.builders import label_map_builder
 
 
 def _get_step_config_from_proto(preprocessor_step_config, step_name):
@@ -60,7 +61,7 @@ PREPROCESSING_FUNCTION_MAP = {
     'image_to_float': preprocessor.image_to_float,
     'subtract_channel_mean': preprocessor.subtract_channel_mean,
     'rgb_to_gray': preprocessor.rgb_to_gray,
-    'string_filtering': preprocessor.string_filtering,
+    # 'string_filtering': preprocessor.string_filtering,
 }
 
 
@@ -111,6 +112,16 @@ def build(preprocessor_step_config):
             {
                 'target_size': [config.target_height, config.target_width],
                 'method': method
+            })
+
+  if step_type == 'string_filtering':
+    config = preprocessor_step_config.string_filtering
+    include_charset_list = label_map_builder._build_character_set(config.include_charset)
+    include_charset = ''.join(include_charset_list)
+    return (preprocessor.string_filtering,
+            {
+              'lower_case': config.lower_case,
+              'include_charset': include_charset
             })
 
   raise ValueError('Unknown preprocessing step: {}'.format(step_type))

@@ -27,7 +27,7 @@ class Convnet(object):
     with tf.variable_scope(scope, 'Convnet', [preprocessed_inputs]):
       shape_assert = self._shape_check(preprocessed_inputs)
       if shape_assert is None:
-        shape_assert = tf.Assert(True)
+        shape_assert = tf.no_op()
       with tf.control_dependencies([shape_assert]), \
            arg_scope(self._conv_hyperparams):
         feature_maps_dict = self._extract_features(preprocessed_inputs)

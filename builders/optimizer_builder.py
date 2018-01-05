@@ -38,6 +38,11 @@ def build(optimizer_config, global_summaries):
     config = optimizer_config.adam_optimizer
     optimizer = tf.train.AdamOptimizer(
         _create_learning_rate(config.learning_rate, global_summaries))
+  
+  if optimizer_type == 'nadam_optimizer':
+    config = optimizer_config.nadam_optimizer
+    optimizer = tf.contrib.opt.NadamOptimizer(
+        _create_learning_rate(config.learning_rate, global_summaries))
 
   if optimizer_type == 'adadelta_optimizer':
     config = optimizer_config.adadelta_optimizer

@@ -28,11 +28,20 @@ def _build_character_set(config):
     file_path = config.text_file
     with open(file_path, 'r') as f:
       character_set_string = f.read()
+    character_set = character_set_string.split('\n')
   elif source_oneof == 'text_string':
     character_set_string = config.text_string
-
-  if not config.delimiter:
-    character_set = list(character_set_string)
-  else:
     character_set = character_set_string.split()
+  elif source_oneof == 'built_in_set':
+    if config.built_in_set == label_map_pb2.CharacterSet.LOWERCASE:
+      character_set = list(string.digits + string.ascii_lowercase)
+    elif config.built_in_set == label_map_pb2.CharacterSet.ALLCASES:
+      character_set = list(string.digits + string.ascii_letters)
+    elif config.built_in_set == label_map_pb2.CharacterSet.ALLCASES_SYMBOLS:
+      character_set = list(string.printable[:-6])
+    else:
+      raise ValueError('Unknown built_in_set')
+  else:
+    raise ValueError('Unknown source_oneof: {}'.format(source_oneof))
+
   return character_set

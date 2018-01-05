@@ -8,9 +8,15 @@ message LabelMap {
 }
 
 message CharacterSet {
+  enum BuiltInSet {
+    LOWERCASE = 0;
+    ALLCASES = 1;
+    ALLCASES_SYMBOLS = 2;
+  }
+
   oneof source_oneof {
     string text_file = 1 [default=""];
     string text_string = 2 [default=""];
+    BuiltInSet built_in_set = 3 [default=LOWERCASE];
   }
-  optional string delimiter = 3 [default=""];
 }

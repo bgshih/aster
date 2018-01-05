@@ -20,6 +20,7 @@ class LabelMap(object):
     self._label_offset = label_offset
     self._unk_label = unk_label or self._label_offset
 
+    logging.info('Number of classes is {}'.format(self.num_classes))
     logging.info('UNK label is {}'.format(self._unk_label))
     self._char_to_label_table, self._label_to_char_table = self._build_lookup_tables()
 

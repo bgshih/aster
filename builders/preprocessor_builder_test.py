@@ -139,7 +139,9 @@ class PreprocessorBuilderTest(tf.test.TestCase):
     preprocessor_text_proto = """
     string_filtering {
       lower_case: true
-      include_charset: "abc"
+      include_charset {
+        text_string: "abc"
+      }
     }
     """
     preprocessor_proto = preprocessor_pb2.PreprocessingStep()
@@ -162,7 +164,9 @@ class PreprocessorBuilderTest(tf.test.TestCase):
     preprocessor_text_proto = """
     string_filtering {
       lower_case: false
-      include_charset: "abcdABCD"
+      include_charset {
+        built_in_set: ALLCASES
+      }
     }
     """
     preprocessor_proto = preprocessor_pb2.PreprocessingStep()
@@ -171,11 +175,11 @@ class PreprocessorBuilderTest(tf.test.TestCase):
     self.assertEqual(function, preprocessor.string_filtering)
     self.assert_dictionary_close(args, {
         'lower_case': False,
-        'include_charset': "abcdABCD"
+        'include_charset': "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     })
 
     test_input_strings = [t.encode('utf-8') for t in ['abc', 'abcde', '!=ABC DE~']]
-    expected_output_string = [t.encode('utf-8') for t in ['abc', 'abcd', 'ABCD']]
+    expected_output_string = [t.encode('utf-8') for t in ['abc', 'abcde', 'ABCDE']]
     test_processed_strings = [function(t, **args) for t in test_input_strings]
     with self.test_session() as sess:
       outputs = sess.run(test_processed_strings)

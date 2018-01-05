@@ -10,8 +10,7 @@ class LabelMapTest(tf.test.TestCase):
   def test_build_label_map(self):
     label_map_text_proto = """
     character_set {
-      text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      delimiter: ""
+      built_in_set: LOWERCASE
     }
     label_offset: 3
     unk_label: -2
@@ -36,11 +35,11 @@ class LabelMapTest(tf.test.TestCase):
       })
       self.assertAllEqual(
         outputs['test_labels'],
-        [[3, -1, -1],
-         [4, -1, -1],
+        [[13, -1, -1],
+         [14, -1, -1],
          [-1, -1, -1],
-         [3, 4, 28],
-         [-2, 3, -2]]
+         [13, 14, 38],
+         [3, 13, -2]]
       )
       self.assertAllEqual(
         outputs['text_lengths'],
@@ -48,7 +47,7 @@ class LabelMapTest(tf.test.TestCase):
       )
       self.assertAllEqual(
         outputs['text_from_labels'],
-        [b'a', b'b', b'', b'abz', b'a']
+        [b'a', b'b', b'', b'abz', b'0a']
       )
 
 if __name__ == '__main__':

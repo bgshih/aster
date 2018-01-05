@@ -6,7 +6,7 @@ import "rare/protos/hyperparams.proto";
 message Convnet {
   oneof convnet_oneof {
     CrnnNet crnn_net = 1;
-    ResNet res_net = 2;
+    ResNet resnet = 2;
   }
 }
 

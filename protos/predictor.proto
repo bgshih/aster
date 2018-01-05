@@ -25,7 +25,7 @@ message AttentionPredictor {
   optional LabelMap label_map = 8;
   optional Loss loss = 9;
   optional LanguageModelRnnCell lm_rnn_cell = 10;
-  optional bool sync = 11 [default = false];
+  optional bool sync = 11 [default = true];
 }
 
 message LanguageModelRnnCell {

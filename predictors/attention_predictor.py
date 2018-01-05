@@ -130,6 +130,12 @@ class AttentionPredictor(predictor.Predictor):
         decoder_inputs = tf.concat([start_labels, text_labels], axis=1)
         decoder_targets = tf.concat([text_labels, end_labels], axis=1)
         decoder_lengths = text_lengths + 1
+
+      # set maximum lengths
+      decoder_inputs = decoder_inputs[:,:self._max_num_steps]
+      decoder_targets = decoder_targets[:,:self._max_num_steps]
+      decoder_lengths = tf.minimum(decoder_lengths, self._max_num_steps)
+      
       self._groundtruth_dict['decoder_inputs'] = decoder_inputs
       self._groundtruth_dict['decoder_targets'] = decoder_targets
       self._groundtruth_dict['decoder_lengths'] = decoder_lengths

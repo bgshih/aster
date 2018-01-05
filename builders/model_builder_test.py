@@ -41,7 +41,7 @@ multi_predictors_recognition_model {
   }
 
   predictor {
-    bahdanau_attention_predictor {
+    attention_predictor {
       rnn_cell {
         lstm_cell {
           num_units: 256
@@ -57,8 +57,7 @@ multi_predictors_recognition_model {
       reverse: false
       label_map {
         character_set {
-          text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-          delimiter: ""
+          built_in_set: ALLCASES
         }
         label_offset: 2
       }
@@ -109,7 +108,8 @@ multi_predictors_recognition_model {
   }
 
   predictor {
-    bahdanau_attention_predictor {
+    name: "Forward"
+    attention_predictor {
       rnn_cell {
         lstm_cell {
           num_units: 256
@@ -125,8 +125,7 @@ multi_predictors_recognition_model {
       reverse: false
       label_map {
         character_set {
-          text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-          delimiter: ""
+          built_in_set: ALLCASES
         }
         label_offset: 2
       }
@@ -140,7 +139,8 @@ multi_predictors_recognition_model {
   }
 
   predictor {
-    bahdanau_attention_predictor {
+    name: "Backward"
+    attention_predictor {
       rnn_cell {
         lstm_cell {
           num_units: 256
@@ -156,8 +156,7 @@ multi_predictors_recognition_model {
       reverse: true
       label_map {
         character_set {
-          text_string: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-          delimiter: ""
+          built_in_set: ALLCASES
         }
         label_offset: 2
       }
@@ -182,7 +181,7 @@ class ModelBuilderTest(tf.test.TestCase):
     test_groundtruth_text_list = [
       tf.constant(b'hello', dtype=tf.string),
       tf.constant(b'world', dtype=tf.string)]
-    model_object.provide_groundtruth(test_groundtruth_text_list)
+    model_object.provide_groundtruth({'groundtruth_text': test_groundtruth_text_list})
     test_input_image = tf.random_uniform(
       shape=[2, 32, 100, 3], minval=0, maxval=255,
       dtype=tf.float32, seed=1)
@@ -202,7 +201,7 @@ class ModelBuilderTest(tf.test.TestCase):
     test_groundtruth_text_list = [
       tf.constant(b'hello', dtype=tf.string),
       tf.constant(b'world', dtype=tf.string)]
-    model_object.provide_groundtruth(test_groundtruth_text_list)
+    model_object.provide_groundtruth({'groundtruth_text': test_groundtruth_text_list})
     test_input_image = tf.random_uniform(
       shape=[2, 32, 100, 3], minval=0, maxval=255,
       dtype=tf.float32, seed=1)
@@ -222,7 +221,7 @@ class ModelBuilderTest(tf.test.TestCase):
     test_groundtruth_text_list = [
       tf.constant(b'hello', dtype=tf.string),
       tf.constant(b'world', dtype=tf.string)]
-    model_object.provide_groundtruth(test_groundtruth_text_list)
+    model_object.provide_groundtruth({'groundtruth_text': test_groundtruth_text_list})
     test_input_image = tf.random_uniform(
       shape=[2, 32, 100, 3], minval=0, maxval=255,
       dtype=tf.float32, seed=1)
@@ -242,7 +241,7 @@ class ModelBuilderTest(tf.test.TestCase):
     test_groundtruth_text_list = [
       tf.constant(b'hello', dtype=tf.string),
       tf.constant(b'world', dtype=tf.string)]
-    model_object.provide_groundtruth(test_groundtruth_text_list)
+    model_object.provide_groundtruth({'groundtruth_text': test_groundtruth_text_list})
     test_input_image = tf.random_uniform(
       shape=[2, 32, 100, 3], minval=0, maxval=255,
       dtype=tf.float32, seed=1)

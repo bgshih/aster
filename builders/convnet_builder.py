@@ -1,6 +1,7 @@
 from rare.builders import hyperparams_builder
 from rare.protos import convnet_pb2
 from rare.convnets import crnn_net
+from rare.convnets import resnet
 
 
 def build(config, is_training):
@@ -9,8 +10,8 @@ def build(config, is_training):
   convnet_oneof = config.WhichOneof('convnet_oneof')
   if convnet_oneof == 'crnn_net':
     return _build_crnn_net(config.crnn_net, is_training)
-  elif convnet_oneof == 'res_net':
-    return _build_res_net(config.resnet, is_training)
+  elif convnet_oneof == 'resnet':
+    return _build_resnet(config.resnet, is_training)
   else:
     raise ValueError('Unknown convnet_oneof: {}'.format(convnet_oneof))
 
@@ -34,5 +35,23 @@ def _build_crnn_net(config, is_training):
     summarize_activations=config.summarize_activations,
     is_training=is_training)
 
-def _build_res_net(config, is_training):
-  raise NotImplementedError
+
+def _build_resnet(config, is_training):
+  if not isinstance(config, convnet_pb2.ResNet):
+    raise ValueError('config is not of type convnet_pb2.ResNet')
+
+  if config.net_type != convnet_pb2.ResNet.SINGLE_BRANCH:
+    raise ValueError('Only SINGLE_BRANCH is supported for ResNet')
+
+  resnet_depth = config.net_depth
+  if resnet_depth == convnet_pb2.ResNet.RESNET_50:
+    resnet_class = resnet.Resnet50Layer
+  else:
+    raise ValueError('Unknown resnet depth: {}'.format(resnet_depth))
+
+  conv_hyperparams = hyperparams_builder.build(config.conv_hyperparams, is_training)
+  return resnet_class(
+    conv_hyperparams=conv_hyperparams,
+    summarize_activations=config.summarize_activations,
+    is_training=is_training,
+  )
