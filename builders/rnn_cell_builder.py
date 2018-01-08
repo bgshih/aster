@@ -6,10 +6,6 @@ from rare.protos import rnn_cell_pb2
 from rare.builders import hyperparams_builder
 
 
-def _hook_rnn_call_fn(call_fn):
-  """Hook a RNN.__call__ function so that it applies reguarlizer to weights after calling."""
-
-
 def build(rnn_cell_config):
   if not isinstance(rnn_cell_config, rnn_cell_pb2.RnnCell):
     raise ValueError('rnn_cell_config not of type '

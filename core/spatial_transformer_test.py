@@ -56,7 +56,7 @@ class SpatialTransformerTest(tf.test.TestCase):
 
   def test_batch_transform(self):
     transformer = spatial_transformer.SpatialTransformer(
-      output_size=(32, 100),
+      output_image_size=(32, 100),
       num_control_points=6,
       margin=0.05
     )
@@ -70,11 +70,11 @@ class SpatialTransformerTest(tf.test.TestCase):
         [0.1, 0.6], [0.5, 0.9], [0.9, 0.6]
       ]
     ], dtype=np.float32)
-    test_im = Image.open('rare/data/test_image.jpg').resize((100, 32))
+    test_im = Image.open('rare/data/test_image.jpg').resize((128, 128))
     test_image_array = np.array(test_im)
     test_image_array = np.array([test_image_array, test_image_array])
     test_images = tf.constant(test_image_array)
-    
+
     sampling_grid = transformer._batch_generate_grid(test_input_ctrl_pts)
     rectified_images = transformer._batch_sample(test_images, sampling_grid)
 
@@ -84,7 +84,7 @@ class SpatialTransformerTest(tf.test.TestCase):
         'sampling_grid': sampling_grid,
         'rectified_images': rectified_images
       })
-    
+
     if True:
       plt.figure()
       plt.subplot(2,4,1)

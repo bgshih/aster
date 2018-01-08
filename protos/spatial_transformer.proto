@@ -1,0 +1,24 @@
+syntax = "proto2";
+package rare.protos;
+
+import "rare/protos/convnet.proto";
+import "rare/protos/hyperparams.proto";
+
+
+message SpatialTransformer {
+  optional Convnet convnet = 1;
+  optional Hyperparams fc_hyperparams = 2;
+
+  // image size for the localization network
+  optional int32 localization_h = 3 [default = 64];
+  optional int32 localization_w = 4 [default = 128];
+
+  // rectified image size
+  optional int32 output_h = 5 [default = 32];
+  optional int32 output_w = 6 [default = 100];
+
+  optional int32 num_control_points = 7 [default = 20];
+  optional float margin = 8 [default = 0.05];
+
+  optional bool summarize_activations = 9 [default = false];
+}

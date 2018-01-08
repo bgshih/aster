@@ -7,6 +7,7 @@ message Convnet {
   oneof convnet_oneof {
     CrnnNet crnn_net = 1;
     ResNet resnet = 2;
+    StnResnet stn_resnet = 3;
   }
 }
 
@@ -36,4 +37,9 @@ message ResNet {
   optional NetDepth net_depth = 2 [default = RESNET_50];
   optional Hyperparams conv_hyperparams = 3;
   optional bool summarize_activations = 4 [default=false];
+}
+
+message StnResnet {
+  optional Hyperparams conv_hyperparams = 1;
+  optional bool summarize_activations = 2 [default=false];
 }

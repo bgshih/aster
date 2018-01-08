@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+from tensorflow.contrib.layers import avg_pool2d, fully_connected
+from tensorflow.contrib.framework import arg_scope
 
 from rare.utils import shape_utils
 
@@ -9,30 +11,49 @@ eps = 1e-6
 class SpatialTransformer(object):
 
   def __init__(self,
-               output_size=None,
+               convnet=None,
+               fc_hyperparams=None,
+               localization_image_size=None,
+               output_image_size=None,
                num_control_points=None,
                margin=0.05):
-    self._output_size = output_size
+    self._convnet = convnet
+    self._fc_hyperparams = fc_hyperparams
+    self._localization_image_size = localization_image_size
+    self._output_image_size = output_image_size
     self._num_control_points = num_control_points
     self._output_grid = self._build_output_grid()
     self._output_ctrl_pts = self._build_output_control_points(margin)
     self._inv_delta_c = self._build_helper_constants()
 
-  def preprocess(self, images):
-    pass
-
-  def transform(self, images):
-    with tf.variable_scope('LocalizationNet', [images]):
-      preprocessed_images = self.preprocess(images)
+  def batch_transform(self, input_images):
+    with tf.variable_scope('LocalizationNet', [input_images]):
+      resized_images = tf.image.resize_images(input_images, self._localization_image_size)
+      preprocessed_images = self._preprocess(resized_images)
       input_control_points = self._localize(preprocessed_images)
+
     with tf.name_scope('GridGenerator', [input_control_points]):
-      sampling_grid = self._generate_grid(input_control_points)
-    with tf.name_scope('Sampler', [sampling_grid, images]):
-      rectified_images = self._sample(sampling_grid, images)
+      sampling_grid = self._batch_generate_grid(input_control_points)
+
+    with tf.name_scope('Sampler', [sampling_grid, input_images]):
+      rectified_images = self._batch_sample(input_images, sampling_grid)
+
     return rectified_images
 
+  def _preprocess(self, resized_inputs):
+    return self._convnet.preprocess(resized_inputs)
+
   def _localize(self, preprocessed_images):
-    pass
+    k = self._num_control_points
+    conv_output = self._convnet.extract_features(preprocessed_images)[-1]
+    batch_size = shape_utils.combined_static_and_dynamic_shape(conv_output)[0]
+    conv_output = tf.reshape(conv_output, [batch_size, -1])
+    with arg_scope(self._fc_hyperparams):
+      fc1 = fully_connected(conv_output, 512)
+      fc2 = fully_connected(fc1, 2*k, activation_fn=None)
+    coordinates = tf.sigmoid(fc2)
+    ctrl_pts = tf.reshape(coordinates, [batch_size, k, 2])
+    return ctrl_pts
 
   def _generate_grid(self, input_ctrl_pts):
     # compute transformation
@@ -92,7 +113,7 @@ class SpatialTransformer(object):
     return batch_Gp
   
   def _sample(self, image, sampling_grid):
-    sampling_grid = tf.maximum(0.0, tf.minimum(1.0-eps, sampling_grid))
+    sampling_grid = tf.maximum(0.0, tf.minimum(1.0-1e-3, sampling_grid))
     orig_dytpe = image.dtype
     image = tf.to_float(image)
     image_h, image_w, _ = shape_utils.combined_static_and_dynamic_shape(image)
@@ -124,7 +145,7 @@ class SpatialTransformer(object):
       tf.expand_dims(w10, axis=1) * I10,
       tf.expand_dims(w11, axis=1) * I11,
     ])
-    output_h, output_w = self._output_size
+    output_h, output_w = self._output_image_size
     output_map = tf.reshape(pixels, [output_h, output_w, -1])
     output_map = tf.cast(output_map, dtype=orig_dytpe)
 
@@ -136,7 +157,8 @@ class SpatialTransformer(object):
       images: tensor of any time with shape [batch_size, image_h, image_w, depth]
       batch_sampling_grid; float32 tensor with shape [batch_size, num_sampling_pts, 2]
     """
-    batch_G = tf.maximum(0.0, tf.minimum(1.0-eps, batch_sampling_grid)) # => [B, n, 2]
+    # batch_G = tf.maximum(0.0, tf.minimum(1.0, batch_sampling_grid)) # => [B, n, 2]
+    batch_G = batch_sampling_grid
     orig_dytpe = images.dtype
     images = tf.to_float(images)
     batch_size, image_h, image_w, _ = shape_utils.combined_static_and_dynamic_shape(images)
@@ -144,6 +166,9 @@ class SpatialTransformer(object):
 
     batch_Gx = image_w * batch_G[:,:,0]
     batch_Gy = image_h * batch_G[:,:,1]
+    batch_Gx = tf.maximum(0.0, tf.minimum(batch_Gx, image_w-1.1))
+    batch_Gy = tf.maximum(0.0, tf.minimum(batch_Gy, image_h-1.1))
+
     batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32)
     batch_Gx1 = batch_Gx0 + 1
     batch_Gy0 = tf.cast(tf.floor(batch_Gy), tf.int32)
@@ -181,13 +206,13 @@ class SpatialTransformer(object):
       tf.expand_dims(batch_w11, axis=2) * batch_I11,
     ])
 
-    output_h, output_w = self._output_size
+    output_h, output_w = self._output_image_size
     output_maps = tf.reshape(batch_pixels, [batch_size, output_h, output_w, -1])
     output_maps = tf.cast(output_maps, dtype=orig_dytpe)
     return output_maps
 
   def _build_output_grid(self):
-    output_h, output_w = self._output_size
+    output_h, output_w = self._output_image_size
     output_grid_x = (np.arange(output_w) + 0.5) / output_w
     output_grid_y = (np.arange(output_h) + 0.5) / output_h
     output_grid = np.stack(
