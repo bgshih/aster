@@ -15,6 +15,6 @@ include_directories(${TF_INC} "${TF_INC}/external/nsync/public")
 link_directories(${TF_LIB})
 add_library(rare SHARED 
   string_filtering_op.cc
-  string_reverse_op.cc)
+  string_reverse_op.cc
+  divide_curve_op.cc)
 target_link_libraries(rare tensorflow_framework)
-
