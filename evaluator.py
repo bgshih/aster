@@ -30,10 +30,7 @@ def _extract_prediction_tensors(model,
   # model inference
   preprocessed_image = preprocessed_input_dict[fields.InputDataFields.image]
   preprocessed_image_shape = tf.shape(preprocessed_image)
-  predictions_dict = model.predict(
-      model.preprocess(
-          tf.to_float(
-              tf.expand_dims(preprocessed_image, 0))))
+  predictions_dict = model.predict(tf.epxnad_dims(preprocessed_image, 0))
   recognitions = model.postprocess(predictions_dict)
 
   tensor_dict = {

@@ -12,19 +12,24 @@ from rare.utils import shape_utils
 class MultiPredictorsRecognitionModel(model.Model):
 
   def __init__(self,
+               spatial_transformer=None,
                feature_extractor=None,
                predictors_dict=None,
                is_training=True):
     super(MultiPredictorsRecognitionModel, self).__init__(
       feature_extractor,
       is_training)
+    self._spatial_transformer = spatial_transformer
     self._predictors_dict = predictors_dict
     self._is_training = is_training
 
     if len(self._predictors_dict) == 0:
       raise ValueError('predictors_list is empty!')
 
-  def predict(self, preprocessed_inputs, scope=None):
+  def predict(self, resized_images, scope=None):
+    if self._spatial_transformer:
+      resized_images = self._spatial_transformer.batch_transform(resized_images)
+    preprocessed_inputs = self.preprocess(resized_images)
     with tf.variable_scope(None, 'FeatureExtractor', [preprocessed_inputs]) as feat_scope:
       feature_maps = self._feature_extractor.extract_features(preprocessed_inputs, scope=feat_scope)
     predictions_dict = {}
