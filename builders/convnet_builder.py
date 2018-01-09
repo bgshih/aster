@@ -12,6 +12,8 @@ def build(config, is_training):
     return _build_crnn_net(config.crnn_net, is_training)
   elif convnet_oneof == 'resnet':
     return _build_resnet(config.resnet, is_training)
+  elif convnet_oneof == 'stn_resnet':
+    return _build_stn_resnet(config.stn_resnet, is_training)
   else:
     raise ValueError('Unknown convnet_oneof: {}'.format(convnet_oneof))
 
@@ -35,7 +37,6 @@ def _build_crnn_net(config, is_training):
     summarize_activations=config.summarize_activations,
     is_training=is_training)
 
-
 def _build_resnet(config, is_training):
   if not isinstance(config, convnet_pb2.ResNet):
     raise ValueError('config is not of type convnet_pb2.ResNet')
@@ -54,4 +55,13 @@ def _build_resnet(config, is_training):
     conv_hyperparams=conv_hyperparams,
     summarize_activations=config.summarize_activations,
     is_training=is_training,
+  )
+
+def _build_stn_resnet(config, is_training):
+  if not isinstance(config, convnet_pb2.StnResnet):
+    raise ValueError('config is not of type convnet_pb2.StnResnet')
+  return resnet.ResnetForSTN(
+    conv_hyperparams=hyperparams_builder.build(config.conv_hyperparams, is_training),
+    summarize_activations=False,
+    is_training=is_training
   )

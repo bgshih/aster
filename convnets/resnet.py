@@ -106,3 +106,24 @@ class Resnet50Layer(Resnet):
       is_training=is_training,
       resnet_spec=resnet_spec
     )
+
+
+class ResnetForSTN(Resnet):
+
+  def __init__(self,
+               conv_hyperparams=None,
+               summarize_activations=None,
+               is_training=None):
+    resnet_spec = [
+      ('Block_1', 3, 16, [2, 2]), # => [32,64]
+      ('Block_2', 3, 32, [2, 2]), # => [16,32]
+      ('Block_3', 3, 32, [2, 2]), # => [8,16]
+      ('Block_4', 3, 64, [2, 2]), # => [4,8]
+      ('Block_5', 3, 64, [2, 2]), # => [2,4]
+    ]
+    super(ResnetForSTN, self).__init__(
+      conv_hyperparams=conv_hyperparams,
+      summarize_activations=summarize_activations,
+      is_training=is_training,
+      resnet_spec=resnet_spec
+    )
