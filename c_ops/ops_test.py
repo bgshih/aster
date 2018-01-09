@@ -37,6 +37,13 @@ class OpsTest(tf.test.TestCase):
         'key_points': key_points
       })
       self.assertAllEqual(sess_outputs['key_points'].shape, (1, 40))
+    
+    import matplotlib.pyplot as plt
+    plt.subplot(1,2,1)
+    plt.scatter(curve_points[0,::2], curve_points[0,1::2])
+    plt.subplot(1,2,2)
+    plt.scatter(sess_outputs['key_points'][0,::2], sess_outputs['key_points'][0,1::2])
+    plt.show()
 
 if __name__ == '__main__':
   tf.test.main()

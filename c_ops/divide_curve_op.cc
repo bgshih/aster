@@ -48,7 +48,8 @@ public:
                                         curve_points.shape().DebugString()));
     OP_REQUIRES(context, curve_points.dim_size(1) % 2 == 0,
                 errors::InvalidArgument("Number of curve points must be even"));
-    const int num_curve_points_per_side = curve_points.dim_size(1) / 2;
+    const int num_curve_points = curve_points.dim_size(1) / 2;
+    const int num_curve_points_per_side = num_curve_points / 2;
     const int batch_size = curve_points.dim_size(0);
 
     Tensor* key_points = nullptr;
@@ -62,18 +63,25 @@ public:
       vector<point_t> key_points_vec;
       for (int j = 0; j < num_curve_points_per_side; j++) {
         curve_points_vec.push_back(
-          {curve_points_tensor(i, 2*j),
-           curve_points_tensor(i, 2*j+1)} );
+          point_t({curve_points_tensor(i, 2*j),
+                   curve_points_tensor(i, 2*j+1)}));
       }
       _divide_curve(curve_points_vec, num_key_points_ / 2, &key_points_vec);
 
       curve_points_vec.clear();
-      for (int j = 0; j < num_curve_points_per_side; j++) {
+      for (int j = num_curve_points_per_side; j < 2*num_curve_points_per_side; j++) {
         curve_points_vec.push_back(
-          point_t({curve_points_tensor(i, 2*(j+num_curve_points_per_side)),
-                   curve_points_tensor(i, 2*(j+num_curve_points_per_side)+1)} ));
+          point_t({curve_points_tensor(i, 2*j),
+                   curve_points_tensor(i, 2*j+1)} ));
       }
       _divide_curve(curve_points_vec, num_key_points_ / 2, &key_points_vec);
+
+      if (key_points_vec.size() != num_key_points_) {
+        char msg[256];
+        sprintf(msg, "Internal error: Expected %d key points, got %d",
+                num_key_points_, (int)key_points_vec.size());
+        throw runtime_error(msg);
+      }
 
       for (int j = 0; j < num_key_points_; j++) {
         key_points_tensor(i, 2*j) = key_points_vec[j][0];
@@ -97,7 +105,7 @@ public:
     int key_point_idx = 1;
     for (int i = 1; i < n; i++) {
       T length = key_point_idx * segment_length;
-      if (length >= distance_cumsum[i-1] &&
+      if (length > distance_cumsum[i-1] &&
           length <= distance_cumsum[i] &&
           key_point_idx < num_key_points-1) {
         T length_to_left = length - distance_cumsum[i-1];
@@ -105,8 +113,8 @@ public:
         T w0 = length_to_right / (length_to_left + length_to_right);
         T w1 = 1.0 - w0;
         point_t interpolated_point({
-          w0 * curve_points[i-1][0] + w1 * curve_points[i-1][0],
-          w0 * curve_points[i-1][1] + w1 * curve_points[i-1][1],
+          w0 * curve_points[i-1][0] + w1 * curve_points[i][0],
+          w0 * curve_points[i-1][1] + w1 * curve_points[i][1],
         });
         key_points->push_back(interpolated_point);
         key_point_idx++;
