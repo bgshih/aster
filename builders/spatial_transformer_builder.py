@@ -18,5 +18,7 @@ def build(config, is_training):
     localization_image_size=(config.localization_h, config.localization_w),
     output_image_size=(config.output_h, config.output_w),
     num_control_points=config.num_control_points,
-    margin=config.margin
+    margin=config.margin,
+    init_bias_pattern=config.init_bias_pattern,
+    summarize_activations=config.summarize_activations
   )

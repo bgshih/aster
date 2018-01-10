@@ -207,7 +207,7 @@ class AttentionPredictor(predictor.Predictor):
       decoder = seq2seq.BeamSearchDecoder(
         cell=decoder_cell,
         embedding=embedding_fn,
-        start_tokens=tf.tile([self.start_label], [batch_size * self._beam_width]),
+        start_tokens=tf.fill([batch_size], self.start_label),
         end_token=self.end_label,
         initial_state=decoder_cell.zero_state(batch_size * self._beam_width, tf.float32),
         beam_width=self._beam_width,

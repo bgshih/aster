@@ -27,12 +27,15 @@ class MultiPredictorsRecognitionModel(model.Model):
       raise ValueError('predictors_list is empty!')
 
   def predict(self, resized_images, scope=None):
+    predictions_dict = {}
     if self._spatial_transformer:
-      resized_images = self._spatial_transformer.batch_transform(resized_images)
+      transform_output_dict = self._spatial_transformer.batch_transform(resized_images)
+      resized_images = transform_output_dict['rectified_images']
+      control_points = transform_output_dict['control_points']
+      predictions_dict.update({ 'control_points': control_points })
     preprocessed_inputs = self.preprocess(resized_images)
     with tf.variable_scope(None, 'FeatureExtractor', [preprocessed_inputs]) as feat_scope:
       feature_maps = self._feature_extractor.extract_features(preprocessed_inputs, scope=feat_scope)
-    predictions_dict = {}
     for name, predictor in self._predictors_dict.items():
       predictor_outputs = predictor.predict(feature_maps, scope='{}/Predictor'.format(name))
       predictions_dict.update({

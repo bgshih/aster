@@ -115,11 +115,11 @@ class ResnetForSTN(Resnet):
                summarize_activations=None,
                is_training=None):
     resnet_spec = [
-      ('Block_1', 3, 16, [2, 2]), # => [32,64]
-      ('Block_2', 3, 32, [2, 2]), # => [16,32]
-      ('Block_3', 3, 32, [2, 2]), # => [8,16]
-      ('Block_4', 3, 64, [2, 2]), # => [4,8]
-      ('Block_5', 3, 64, [2, 2]), # => [2,4]
+      ('Block_1', 2, 8, [2, 2]), # => [32,64]
+      ('Block_2', 2, 16, [2, 2]), # => [16,32]
+      ('Block_3', 2, 32, [2, 2]), # => [8,16]
+      ('Block_4', 2, 64, [2, 2]), # => [4,8]
+      ('Block_5', 2, 64, [2, 2]), # => [2,4]
     ]
     super(ResnetForSTN, self).__init__(
       conv_hyperparams=conv_hyperparams,

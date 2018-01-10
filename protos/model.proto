@@ -3,6 +3,7 @@ package rare.protos;
 
 import "rare/protos/feature_extractor.proto";
 import "rare/protos/predictor.proto";
+import "rare/protos/spatial_transformer.proto";
 
 
 message Model {
@@ -12,6 +13,7 @@ message Model {
 }
 
 message MultiPredictorsRecognitionModel {
-  optional FeatureExtractor feature_extractor = 1;
-  repeated Predictor predictor = 2;
+  optional SpatialTransformer spatial_transformer = 1;
+  optional FeatureExtractor feature_extractor = 2;
+  repeated Predictor predictor = 3;
 }

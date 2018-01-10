@@ -16,21 +16,40 @@ class SpatialTransformer(object):
                localization_image_size=None,
                output_image_size=None,
                num_control_points=None,
-               margin=0.05):
+               margin=0.05,
+               init_bias_pattern=None,
+               summarize_activations=False):
     self._convnet = convnet
     self._fc_hyperparams = fc_hyperparams
     self._localization_image_size = localization_image_size
     self._output_image_size = output_image_size
     self._num_control_points = num_control_points
+    self._margin = margin
+    self._init_bias_pattern = init_bias_pattern
+    self._summarize_activations = summarize_activations
+
     self._output_grid = self._build_output_grid()
     self._output_ctrl_pts = self._build_output_control_points(margin)
     self._inv_delta_c = self._build_helper_constants()
+
+    if self._init_bias_pattern == 'slope':
+      self._init_bias = self._build_init_bias_slope_pattern()
+    elif self._init_bias_pattern == 'identity':
+      self._init_bias = self._build_init_bias_identity_pattern()
+    elif self._init_bias_pattern == 'random':
+      self._init_bias = None
+    else:
+      raise ValueError('Unknown init bias pattern: {}'.format(self._init_bias_pattern))
+    # self._init_bias = None
+    # self._ref_ctrl_pts = self._build_ref_ctrl_pts()
 
   def batch_transform(self, input_images):
     with tf.variable_scope('LocalizationNet', [input_images]):
       resized_images = tf.image.resize_images(input_images, self._localization_image_size)
       preprocessed_images = self._preprocess(resized_images)
       input_control_points = self._localize(preprocessed_images)
+    
+    # input_control_points = tf.Print(input_control_points, [input_control_points], message=None, summarize=40)
 
     with tf.name_scope('GridGenerator', [input_control_points]):
       sampling_grid = self._batch_generate_grid(input_control_points)
@@ -38,7 +57,10 @@ class SpatialTransformer(object):
     with tf.name_scope('Sampler', [sampling_grid, input_images]):
       rectified_images = self._batch_sample(input_images, sampling_grid)
 
-    return rectified_images
+    return {
+      'rectified_images': rectified_images,
+      'control_points': input_control_points
+    }
 
   def _preprocess(self, resized_inputs):
     return self._convnet.preprocess(resized_inputs)
@@ -50,9 +72,14 @@ class SpatialTransformer(object):
     conv_output = tf.reshape(conv_output, [batch_size, -1])
     with arg_scope(self._fc_hyperparams):
       fc1 = fully_connected(conv_output, 512)
-      fc2 = fully_connected(fc1, 2*k, activation_fn=None)
-    coordinates = tf.sigmoid(fc2)
-    ctrl_pts = tf.reshape(coordinates, [batch_size, k, 2])
+      fc2_weights_initializer = tf.zeros_initializer()
+      fc2_biases_initializer = tf.constant_initializer(self._init_bias)
+      fc2 = fully_connected(fc1, 2 * k,
+        weights_initializer=fc2_weights_initializer,
+        biases_initializer=fc2_biases_initializer,
+        activation_fn=None,
+        normalizer_fn=None)
+    ctrl_pts = tf.reshape(tf.sigmoid(fc2), [batch_size, k, 2])
     return ctrl_pts
 
   def _generate_grid(self, input_ctrl_pts):
@@ -157,10 +184,10 @@ class SpatialTransformer(object):
       images: tensor of any time with shape [batch_size, image_h, image_w, depth]
       batch_sampling_grid; float32 tensor with shape [batch_size, num_sampling_pts, 2]
     """
+    if images.dtype != tf.float32:
+      raise ValueError('image must be of type tf.float32')
     # batch_G = tf.maximum(0.0, tf.minimum(1.0, batch_sampling_grid)) # => [B, n, 2]
     batch_G = batch_sampling_grid
-    orig_dytpe = images.dtype
-    images = tf.to_float(images)
     batch_size, image_h, image_w, _ = shape_utils.combined_static_and_dynamic_shape(images)
     n = shape_utils.combined_static_and_dynamic_shape(batch_sampling_grid)[1]
 
@@ -208,7 +235,12 @@ class SpatialTransformer(object):
 
     output_h, output_w = self._output_image_size
     output_maps = tf.reshape(batch_pixels, [batch_size, output_h, output_w, -1])
-    output_maps = tf.cast(output_maps, dtype=orig_dytpe)
+    output_maps = tf.cast(output_maps, dtype=images.dtype)
+
+    if self._summarize_activations:
+      tf.summary.image('InputImage', images, max_outputs=3)
+      tf.summary.image('RectifiedImage', output_maps, max_outputs=3)
+
     return output_maps
 
   def _build_output_grid(self):
@@ -249,3 +281,41 @@ class SpatialTransformer(object):
     )
     inv_delta_C = np.linalg.inv(delta_C)
     return inv_delta_C
+
+  def _build_init_bias_slope_pattern(self):
+    num_ctrl_pts_per_side = self._num_control_points // 2
+    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    upper_y = np.linspace(self._margin, 0.3, num=num_ctrl_pts_per_side)
+    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    lower_y = np.linspace(0.7, 1-self._margin, num=num_ctrl_pts_per_side)
+    init_ctrl_pts = np.concatenate([
+      np.stack([upper_x, upper_y], axis=1),
+      np.stack([lower_x, lower_y], axis=1),
+    ], axis=0)
+    init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    return init_biases
+
+  def _build_init_bias_identity_pattern(self):
+    num_ctrl_pts_per_side = self._num_control_points // 2
+    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    upper_y = np.linspace(self._margin, self._margin, num=num_ctrl_pts_per_side)
+    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    lower_y = np.linspace(1-self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    init_ctrl_pts = np.concatenate([
+      np.stack([upper_x, upper_y], axis=1),
+      np.stack([lower_x, lower_y], axis=1),
+    ], axis=0)
+    init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    return init_biases
+
+  def _build_ref_ctrl_pts(self):
+    num_ctrl_pts_per_side = self._num_control_points // 2
+    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    upper_y = np.linspace(0.3, 0.3, num=num_ctrl_pts_per_side)
+    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    lower_y = np.linspace(0.7, 0.7, num=num_ctrl_pts_per_side)
+    ref_ctrl_pts = np.concatenate([
+      np.stack([upper_x, upper_y], axis=1),
+      np.stack([lower_x, lower_y], axis=1),
+    ], axis=0).flatten()
+    return tf.constant(ref_ctrl_pts, tf.float32)
