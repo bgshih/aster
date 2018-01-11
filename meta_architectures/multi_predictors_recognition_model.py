@@ -15,12 +15,14 @@ class MultiPredictorsRecognitionModel(model.Model):
                spatial_transformer=None,
                feature_extractor=None,
                predictors_dict=None,
+               regression_loss=None,
                is_training=True):
     super(MultiPredictorsRecognitionModel, self).__init__(
       feature_extractor,
       is_training)
     self._spatial_transformer = spatial_transformer
     self._predictors_dict = predictors_dict
+    self._regression_loss = regression_loss
     self._is_training = is_training
 
     if len(self._predictors_dict) == 0:
@@ -77,6 +79,7 @@ class MultiPredictorsRecognitionModel(model.Model):
         predictor.provide_groundtruth(
           groundtruth_text,
           scope='{}/ProvideGroundtruth'.format(name))
+      groundtruth_keypoints
 
   def _aggregate_recognition_results(self, text_list, scores_list, scope=None):
     """Aggregate recognition results by picking up ones with highest scores.

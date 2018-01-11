@@ -17,5 +17,8 @@ def build(config):
     )
   elif loss_oneof == 'tfseq2seq_loss':
     raise NotImplementedError
+  elif loss_oneof == 'l2_regression_loss':
+    loss_config = config.l2_regression_loss
+    return loss.L2RegressionLoss(weight=loss_config.weight)
   else:
     raise ValueError('Unknown loss_oneof: {}'.format(loss_oneof))

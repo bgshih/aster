@@ -49,3 +49,16 @@ class SequenceCrossEntropyLoss(object):
       if self._weight:
         loss = loss * self._weight
     return loss
+
+
+class L2RegressionLoss(object):
+  def __init__(self, weight=None):
+    self._weight = weight
+
+  def __call__(self, prediction, target, scope=None):
+    with tf.name_scope(scope, 'L2RegressionLoss', [prediction, target]):
+      losses = tf.nn.norm(prediction, target, ord=2, axis=1, keep_dims=False)
+      loss = tf.reduce_mean(losses)
+      if self._weight is not None:
+        loss = loss * self._weight
+    return loss
