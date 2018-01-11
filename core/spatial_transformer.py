@@ -36,6 +36,8 @@ class SpatialTransformer(object):
       self._init_bias = self._build_init_bias_slope_pattern()
     elif self._init_bias_pattern == 'identity':
       self._init_bias = self._build_init_bias_identity_pattern()
+    elif self._init_bias_pattern == 'sine':
+      self._init_bias = self._build_init_bias_sine_pattern()
     elif self._init_bias_pattern == 'random':
       self._init_bias = None
     else:
@@ -49,8 +51,6 @@ class SpatialTransformer(object):
       # preprocessed_images = self._preprocess(resized_images)
       input_control_points = self._localize(preprocessed_inputs)
     
-    # input_control_points = tf.Print(input_control_points, [input_control_points], message=None, summarize=40)
-
     with tf.name_scope('GridGenerator', [input_control_points]):
       sampling_grid = self._batch_generate_grid(input_control_points)
 
@@ -79,7 +79,9 @@ class SpatialTransformer(object):
         biases_initializer=fc2_biases_initializer,
         activation_fn=None,
         normalizer_fn=None)
-    ctrl_pts = tf.reshape(tf.sigmoid(fc2), [batch_size, k, 2])
+    # ctrl_pts = tf.reshape(tf.sigmoid(fc2), [batch_size, k, 2])
+    ctrl_pts = (tf.tanh(fc2) + 1.) / 2.
+    ctrl_pts = tf.reshape(ctrl_pts, [batch_size, k, 2])
     return ctrl_pts
 
   def _generate_grid(self, input_ctrl_pts):
@@ -303,6 +305,19 @@ class SpatialTransformer(object):
     upper_y = np.linspace(self._margin, self._margin, num=num_ctrl_pts_per_side)
     lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
     lower_y = np.linspace(1-self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    init_ctrl_pts = np.concatenate([
+      np.stack([upper_x, upper_y], axis=1),
+      np.stack([lower_x, lower_y], axis=1),
+    ], axis=0)
+    init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    return init_biases
+
+  def _build_init_bias_sine_pattern(self):
+    num_ctrl_pts_per_side = self._num_control_points // 2
+    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    upper_y = 0.3 + 0.2 * np.sin(2 * np.pi * upper_x)
+    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    lower_y = 0.7 + 0.2 * np.sin(2 * np.pi * lower_x)
     init_ctrl_pts = np.concatenate([
       np.stack([upper_x, upper_y], axis=1),
       np.stack([lower_x, lower_y], axis=1),

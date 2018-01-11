@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include <algorithm>
 #include <string>
 
@@ -60,28 +61,29 @@ public:
 
     auto curve_points_tensor = curve_points.tensor<T, 2>();
     for (int i = 0; i < batch_size; i++) {
-      vector<point_t> curve_points_vec;
-      vector<point_t> key_points_vec;
+      vector<point_t> upper_curve_points_vec;
+      vector<point_t> lower_curve_points_vec;
       for (int j = 0; j < num_curve_points_per_side; j++) {
-        curve_points_vec.push_back(
+        upper_curve_points_vec.push_back(
           point_t({curve_points_tensor(i, 2*j),
                    curve_points_tensor(i, 2*j+1)}));
       }
-      _divide_curve(curve_points_vec, num_key_points_per_side, &key_points_vec);
-
-      curve_points_vec.clear();
       for (int j = num_curve_points_per_side; j < 2*num_curve_points_per_side; j++) {
-        curve_points_vec.push_back(
+        lower_curve_points_vec.push_back(
           point_t({curve_points_tensor(i, 2*j),
                    curve_points_tensor(i, 2*j+1)} ));
       }
-      _divide_curve(curve_points_vec, num_key_points_per_side, &key_points_vec);
 
-      if (key_points_vec.size() != num_key_points_) {
-        char msg[256];
-        sprintf(msg, "Internal error: Expected %d key points, got %d",
-                num_key_points_, (int)key_points_vec.size());
-        throw runtime_error(msg);
+      vector<point_t> key_points_vec;
+      try {
+        _divide_curve(upper_curve_points_vec, num_key_points_per_side, &key_points_vec);
+        _divide_curve(lower_curve_points_vec, num_key_points_per_side, &key_points_vec);
+      } catch (const std::runtime_error& e) {
+        cout << e.what() << endl;
+        key_points_vec.clear();
+        for (int j = 0; j < num_key_points_; j++) {
+          key_points_vec.push_back(point_t({ 0.5, 0.5 }));
+        }
       }
 
       for (int j = 0; j < num_key_points_; j++) {
@@ -103,32 +105,31 @@ public:
     T segment_length = total_dist / (num_key_points - 1);
 
     key_points->push_back(curve_points[0]);
-    int key_point_idx = 1;
-    for (int i = 1; i < n; i++) {
-      T length = key_point_idx * segment_length;
-      if (length > distance_cumsum[i-1] &&
-          length <= distance_cumsum[i] &&
-          key_point_idx < num_key_points-1) {
-        T length_to_left = length - distance_cumsum[i-1];
-        T length_to_right = distance_cumsum[i] - length;
-        T w0 = length_to_right / (length_to_left + length_to_right);
-        T w1 = 1.0 - w0;
-        point_t interpolated_point({
-          w0 * curve_points[i-1][0] + w1 * curve_points[i][0],
-          w0 * curve_points[i-1][1] + w1 * curve_points[i][1],
-        });
-        key_points->push_back(interpolated_point);
-        key_point_idx++;
+    for (int keypoint_idx = 1; keypoint_idx < num_key_points-1; keypoint_idx++) {
+      T length = keypoint_idx * segment_length;
+      bool success = false;
+      for (int i = 0; i < n; i++) {
+        if (length > distance_cumsum[i-1] && length <= distance_cumsum[i]) {
+          T length_to_left = length - distance_cumsum[i-1];
+          T length_to_right = distance_cumsum[i] - length;
+          T w0 = length_to_right / (length_to_left + length_to_right);
+          T w1 = 1.0 - w0;
+          point_t interpolated_point({
+            w0 * curve_points[i-1][0] + w1 * curve_points[i][0],
+            w0 * curve_points[i-1][1] + w1 * curve_points[i][1],
+          });
+          key_points->push_back(interpolated_point);
+          success = true;
+          break;
+        }
+      }
+      if (!success) {
+        char msg[256];
+        sprintf(msg, "Internal error: failed to find neighbors %f.", length);
+        throw runtime_error(msg);
       }
     }
     key_points->push_back(curve_points[n-1]);
-    key_point_idx++;
-
-    if (key_point_idx != num_key_points) {
-      char msg[256];
-      sprintf(msg, "Internal error: number of points mismatches %d vs %d", key_point_idx, num_key_points);
-      throw runtime_error(msg);
-    }
   }
 
   T _dist(const point_t& pt1, const point_t& pt2) {

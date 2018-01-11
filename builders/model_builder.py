@@ -35,12 +35,16 @@ def _build_multi_predictors_recognition_model(config, is_training):
     predictor_config.name : predictor_builder.build(predictor_config, is_training=is_training)
     for predictor_config in config.predictor
   }
+  regression_loss_object = (
+    None if not config.keypoint_supervision else
+    loss_builder.build(config.regression_loss))
+    
   model_object = multi_predictors_recognition_model.MultiPredictorsRecognitionModel(
     spatial_transformer=spatial_transformer_object,
     feature_extractor=feature_extractor_object,
     predictors_dict=predictors_dict,
     keypoint_supervision=config.keypoint_supervision,
-    regression_loss=loss_builder.build(config.regression_loss),
+    regression_loss=regression_loss_object,
     is_training=is_training,
   )
   return model_object
