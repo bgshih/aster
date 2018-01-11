@@ -43,19 +43,19 @@ class SpatialTransformer(object):
     # self._init_bias = None
     # self._ref_ctrl_pts = self._build_ref_ctrl_pts()
 
-  def batch_transform(self, input_images):
-    with tf.variable_scope('LocalizationNet', [input_images]):
-      resized_images = tf.image.resize_images(input_images, self._localization_image_size)
-      preprocessed_images = self._preprocess(resized_images)
-      input_control_points = self._localize(preprocessed_images)
+  def batch_transform(self, preprocessed_inputs):
+    with tf.variable_scope('LocalizationNet', [preprocessed_inputs]):
+      resized_images = tf.image.resize_images(preprocessed_inputs, self._localization_image_size)
+      # preprocessed_images = self._preprocess(resized_images)
+      input_control_points = self._localize(preprocessed_inputs)
     
     # input_control_points = tf.Print(input_control_points, [input_control_points], message=None, summarize=40)
 
     with tf.name_scope('GridGenerator', [input_control_points]):
       sampling_grid = self._batch_generate_grid(input_control_points)
 
-    with tf.name_scope('Sampler', [sampling_grid, input_images]):
-      rectified_images = self._batch_sample(input_images, sampling_grid)
+    with tf.name_scope('Sampler', [sampling_grid, preprocessed_inputs]):
+      rectified_images = self._batch_sample(preprocessed_inputs, sampling_grid)
 
     return {
       'rectified_images': rectified_images,
@@ -238,8 +238,10 @@ class SpatialTransformer(object):
     output_maps = tf.cast(output_maps, dtype=images.dtype)
 
     if self._summarize_activations:
-      tf.summary.image('InputImage', images, max_outputs=3)
-      tf.summary.image('RectifiedImage', output_maps, max_outputs=3)
+      tf.summary.image('InputImage1', images[:2], max_outputs=2)
+      tf.summary.image('InputImage2', images[-2:], max_outputs=2)
+      tf.summary.image('RectifiedImage1', output_maps[:2], max_outputs=2)
+      tf.summary.image('RectifiedImage2', output_maps[-2:], max_outputs=2)
 
     return output_maps
 

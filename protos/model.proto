@@ -4,6 +4,7 @@ package rare.protos;
 import "rare/protos/feature_extractor.proto";
 import "rare/protos/predictor.proto";
 import "rare/protos/spatial_transformer.proto";
+import "rare/protos/loss.proto";
 
 
 message Model {
@@ -16,4 +17,6 @@ message MultiPredictorsRecognitionModel {
   optional SpatialTransformer spatial_transformer = 1;
   optional FeatureExtractor feature_extractor = 2;
   repeated Predictor predictor = 3;
+  optional bool keypoint_supervision = 4 [default = false];
+  optional Loss regression_loss = 5;
 }

@@ -3,6 +3,7 @@ import tensorflow as tf
 from rare.builders import spatial_transformer_builder
 from rare.builders import feature_extractor_builder
 from rare.builders import predictor_builder
+from rare.builders import loss_builder
 from rare.meta_architectures import multi_predictors_recognition_model
 from rare.protos import model_pb2
 
@@ -38,6 +39,8 @@ def _build_multi_predictors_recognition_model(config, is_training):
     spatial_transformer=spatial_transformer_object,
     feature_extractor=feature_extractor_object,
     predictors_dict=predictors_dict,
+    keypoint_supervision=config.keypoint_supervision,
+    regression_loss=loss_builder.build(config.regression_loss),
     is_training=is_training,
   )
   return model_object

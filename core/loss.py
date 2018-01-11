@@ -57,7 +57,8 @@ class L2RegressionLoss(object):
 
   def __call__(self, prediction, target, scope=None):
     with tf.name_scope(scope, 'L2RegressionLoss', [prediction, target]):
-      losses = tf.nn.norm(prediction, target, ord=2, axis=1, keep_dims=False)
+      diff = prediction - target
+      losses = tf.reduce_sum(tf.square(diff), axis=1)
       loss = tf.reduce_mean(losses)
       if self._weight is not None:
         loss = loss * self._weight

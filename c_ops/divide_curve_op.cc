@@ -50,6 +50,7 @@ public:
                 errors::InvalidArgument("Number of curve points must be even"));
     const int num_curve_points = curve_points.dim_size(1) / 2;
     const int num_curve_points_per_side = num_curve_points / 2;
+    const int num_key_points_per_side = num_key_points_ / 2;
     const int batch_size = curve_points.dim_size(0);
 
     Tensor* key_points = nullptr;
@@ -66,7 +67,7 @@ public:
           point_t({curve_points_tensor(i, 2*j),
                    curve_points_tensor(i, 2*j+1)}));
       }
-      _divide_curve(curve_points_vec, num_key_points_ / 2, &key_points_vec);
+      _divide_curve(curve_points_vec, num_key_points_per_side, &key_points_vec);
 
       curve_points_vec.clear();
       for (int j = num_curve_points_per_side; j < 2*num_curve_points_per_side; j++) {
@@ -74,7 +75,7 @@ public:
           point_t({curve_points_tensor(i, 2*j),
                    curve_points_tensor(i, 2*j+1)} ));
       }
-      _divide_curve(curve_points_vec, num_key_points_ / 2, &key_points_vec);
+      _divide_curve(curve_points_vec, num_key_points_per_side, &key_points_vec);
 
       if (key_points_vec.size() != num_key_points_) {
         char msg[256];

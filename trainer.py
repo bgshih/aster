@@ -35,9 +35,15 @@ def _get_inputs_multiqueues(input_queue_list):
   keypoints_list = []
   for input_queue in input_queue_list:
     read_data_list = input_queue.dequeue()
-    images_list.extend([read_data[fields.InputDataFields.image] for read_data in read_data_list])
-    transcript_list.extend([read_data[fields.InputDataFields.groundtruth_text] for read_data in read_data_list])
-    keypoints_list.extend([read_data[fields.InputDataFields.groundtruth_keypoints] for read_data in read_data_list])
+    images_list.extend([
+      read_data[fields.InputDataFields.image] for read_data in read_data_list
+    ])
+    transcript_list.extend([
+      read_data[fields.InputDataFields.groundtruth_text] for read_data in read_data_list
+    ])
+    keypoints_list.extend([
+      read_data[fields.InputDataFields.groundtruth_keypoints] for read_data in read_data_list
+    ])
   return images_list, {
     fields.InputDataFields.groundtruth_text: transcript_list,
     fields.InputDataFields.groundtruth_keypoints: keypoints_list

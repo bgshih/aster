@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 from google.protobuf import text_format
+from rare.core import loss
 from rare.builders import loss_builder
 from rare.protos import loss_pb2
 
@@ -54,7 +55,7 @@ class LossTest(tf.test.TestCase):
       })
       print(outputs)
 
-def test_build_reg_loss(self):
+  def test_build_reg_loss(self):
     loss_text_proto = """
       l2_regression_loss {
         weight: 1.0
@@ -63,12 +64,13 @@ def test_build_reg_loss(self):
     loss_proto = loss_pb2.Loss()
     text_format.Merge(loss_text_proto, loss_proto)
     loss_object = loss_builder.build(loss_proto)
+    self.assertTrue(isinstance(loss_object, loss.L2RegressionLoss))
 
-    prediction = tf.constant(np.random.uniform(-1, 1, (2, 20)))
-    target = tf.constant(np.random.uniform(-1, 1, (2, 20)))
+    prediction = tf.constant(np.random.uniform(0, 1, (2, 20)))
+    target = tf.constant(np.random.uniform(0, 1, (2, 20)))
     loss_tensor = loss_object(prediction, target)
     with self.test_session() as sess:
-      print(loss_tensor.eval())
+      print({'loss': loss_tensor.eval()})
 
 if __name__ == '__main__':
   tf.test.main()

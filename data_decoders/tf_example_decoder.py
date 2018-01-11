@@ -49,4 +49,18 @@ class TfExampleDecoder(object):
     keys = decoder.list_items()
     tensors = decoder.decode(serialized_example, items=keys)
     tensor_dict = dict(zip(keys, tensors))
+
+    # normalize groundtruth keypoints
+    # TODO: either move this to dataset creation or add image height and witdh
+    image = tensor_dict[fields.InputDataFields.image]
+    image_size = tf.shape(image)[:2]
+    keypoints = tensor_dict[fields.InputDataFields.groundtruth_keypoints]
+    num_keypoints = tf.shape(keypoints)[0] // 2
+    dividor = tf.tile(
+      tf.to_float(tf.stack([image_size[1], image_size[0]])),
+      tf.expand_dims(num_keypoints, 0)
+    )
+    normalized_keypoints = tf.truediv(keypoints, dividor)
+    tensor_dict[fields.InputDataFields.groundtruth_keypoints] = normalized_keypoints
+
     return tensor_dict
