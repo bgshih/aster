@@ -8,6 +8,7 @@ message Convnet {
     CrnnNet crnn_net = 1;
     ResNet resnet = 2;
     StnResnet stn_resnet = 3;
+    StnConvnet stn_convnet = 4;
   }
 }
 
@@ -40,6 +41,11 @@ message ResNet {
 }
 
 message StnResnet {
+  optional Hyperparams conv_hyperparams = 1;
+  optional bool summarize_activations = 2 [default=false];
+}
+
+message StnConvnet {
   optional Hyperparams conv_hyperparams = 1;
   optional bool summarize_activations = 2 [default=false];
 }

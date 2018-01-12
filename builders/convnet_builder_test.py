@@ -5,6 +5,7 @@ from rare.builders import convnet_builder
 from rare.protos import convnet_pb2
 from rare.convnets import crnn_net
 from rare.convnets import resnet
+from rare.convnets import stn_convnet
 
 class FeatureExtractorTest(tf.test.TestCase):
 
@@ -159,6 +160,34 @@ class FeatureExtractorTest(tf.test.TestCase):
     feature_maps = convnet_object.extract_features(test_input_image)
     self.assertTrue(len(feature_maps) == 1)
     print('Outputs of test_build_stn_resnet: {}'.format(feature_maps))
+
+  def test_build_stn_convnet(self):
+    text_proto = """
+    stn_convnet {
+      conv_hyperparams {
+        op: CONV
+        regularizer { l2_regularizer { weight: 1e-4 } }
+        initializer { variance_scaling_initializer { } }
+        batch_norm { decay: 0.99 }
+      }
+    }
+    """
+    convnet_proto = convnet_pb2.Convnet()
+    text_format.Merge(text_proto, convnet_proto)
+    convnet_object = convnet_builder.build(convnet_proto, True)
+    self.assertTrue(
+      isinstance(convnet_object, stn_convnet.StnConvnet))
+    test_image_shape = [2, 64, 128, 3]
+    test_input_image = tf.random_uniform(
+      test_image_shape,
+      minval=0,
+      maxval=255.0,
+      dtype=tf.float32,
+      seed=1
+    )
+    feature_maps = convnet_object.extract_features(test_input_image)
+    self.assertTrue(len(feature_maps) == 1)
+    print('Outputs of test_build_stn_convnet: {}'.format(feature_maps))
 
 
 if __name__ == '__main__':

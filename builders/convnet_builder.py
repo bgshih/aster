@@ -2,6 +2,7 @@ from rare.builders import hyperparams_builder
 from rare.protos import convnet_pb2
 from rare.convnets import crnn_net
 from rare.convnets import resnet
+from rare.convnets import stn_convnet
 
 
 def build(config, is_training):
@@ -14,6 +15,8 @@ def build(config, is_training):
     return _build_resnet(config.resnet, is_training)
   elif convnet_oneof == 'stn_resnet':
     return _build_stn_resnet(config.stn_resnet, is_training)
+  elif convnet_oneof == 'stn_convnet':
+    return _build_stn_convnet(config.stn_convnet, is_training)
   else:
     raise ValueError('Unknown convnet_oneof: {}'.format(convnet_oneof))
 
@@ -62,6 +65,15 @@ def _build_stn_resnet(config, is_training):
     raise ValueError('config is not of type convnet_pb2.StnResnet')
   return resnet.ResnetForSTN(
     conv_hyperparams=hyperparams_builder.build(config.conv_hyperparams, is_training),
-    summarize_activations=False,
+    summarize_activations=config.summarize_activations,
+    is_training=is_training
+  )
+
+def _build_stn_convnet(config, is_training):
+  if not isinstance(config, convnet_pb2.StnConvnet):
+    raise ValueError('config is not of type convnet_pb2.StnConvnet')
+  return stn_convnet.StnConvnet(
+    conv_hyperparams=hyperparams_builder.build(config.conv_hyperparams, is_training),
+    summarize_activations=config.summarize_activations,
     is_training=is_training
   )

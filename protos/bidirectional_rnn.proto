@@ -8,7 +8,7 @@ message BidirectionalRnn {
   optional bool static = 1 [default = true];
   optional RnnCell fw_bw_rnn_cell = 2;
   optional Regularizer rnn_regularizer = 3;
-  optional int32 num_output_units = 4;
+  optional int32 num_output_units = 4 [default = 0];
   optional Hyperparams fc_hyperparams = 5;
   optional bool summarize_activations = 6 [default = false];
 }

@@ -42,14 +42,12 @@ class SpatialTransformer(object):
       self._init_bias = None
     else:
       raise ValueError('Unknown init bias pattern: {}'.format(self._init_bias_pattern))
-    # self._init_bias = None
-    # self._ref_ctrl_pts = self._build_ref_ctrl_pts()
 
   def batch_transform(self, preprocessed_inputs):
     with tf.variable_scope('LocalizationNet', [preprocessed_inputs]):
       resized_images = tf.image.resize_images(preprocessed_inputs, self._localization_image_size)
       # preprocessed_images = self._preprocess(resized_images)
-      input_control_points = self._localize(preprocessed_inputs)
+      input_control_points = self._localize(resized_images)
     
     with tf.name_scope('GridGenerator', [input_control_points]):
       sampling_grid = self._batch_generate_grid(input_control_points)
@@ -79,32 +77,9 @@ class SpatialTransformer(object):
         biases_initializer=fc2_biases_initializer,
         activation_fn=None,
         normalizer_fn=None)
-    # ctrl_pts = tf.reshape(tf.sigmoid(fc2), [batch_size, k, 2])
-    ctrl_pts = (tf.tanh(fc2) + 1.) / 2.
+    ctrl_pts = 0.99 * tf.sigmoid(fc2)
     ctrl_pts = tf.reshape(ctrl_pts, [batch_size, k, 2])
     return ctrl_pts
-
-  def _generate_grid(self, input_ctrl_pts):
-    # compute transformation
-    C = tf.constant(self._output_ctrl_pts, tf.float32)
-    Cp = input_ctrl_pts
-    T = tf.matmul(tf.constant(self._inv_delta_c, dtype=tf.float32),
-                  tf.concat([Cp, tf.zeros([3, 2])], axis=0))
-
-    # transform
-    k = self._num_control_points
-    output_grid_points = self._output_grid.reshape([-1, 2])
-    n = output_grid_points.shape[0]
-    P = tf.constant(output_grid_points, tf.float32)
-    P_tile = tf.tile(tf.expand_dims(P, axis=1), [1, k, 1]) # => [n, k, 2]
-    C_tile = tf.expand_dims(C, axis=0) # => [1, k, 2]
-    P_diff = P_tile - C_tile   # => [n, k, 2]
-    P_norm = tf.norm(P_diff, axis=2, ord=2, keep_dims=False) # => [n, k]
-
-    rbf = tf.multiply(tf.square(P_norm), tf.log(P_norm + eps)) # => [n, k]
-    P_lifted = tf.concat([ tf.ones([n, 1]), P, rbf ], axis=1)
-    Pp = tf.matmul(P_lifted, T)
-    return Pp
 
   def _batch_generate_grid(self, input_ctrl_pts):
     """
@@ -141,45 +116,6 @@ class SpatialTransformer(object):
     batch_Gp = tf.matmul(batch_G_lifted, batch_T)
     return batch_Gp
   
-  def _sample(self, image, sampling_grid):
-    sampling_grid = tf.maximum(0.0, tf.minimum(1.0-1e-3, sampling_grid))
-    orig_dytpe = image.dtype
-    image = tf.to_float(image)
-    image_h, image_w, _ = shape_utils.combined_static_and_dynamic_shape(image)
-    Gx = image_w * sampling_grid[:,0]
-    Gy = image_h * sampling_grid[:,1]
-    Gx0 = tf.cast(tf.floor(Gx), tf.int32)
-    Gx1 = Gx0 + 1
-    Gy0 = tf.cast(tf.floor(Gy), tf.int32)
-    Gy1 = Gy0 + 1
-
-    I00 = tf.gather_nd(image, tf.stack([Gy0, Gx0], axis=1))
-    I01 = tf.gather_nd(image, tf.stack([Gy1, Gx0], axis=1))
-    I10 = tf.gather_nd(image, tf.stack([Gy0, Gx1], axis=1))
-    I11 = tf.gather_nd(image, tf.stack([Gy1, Gx1], axis=1))
-
-    Gx0 = tf.to_float(Gx0)
-    Gx1 = tf.to_float(Gx1)
-    Gy0 = tf.to_float(Gy0)
-    Gy1 = tf.to_float(Gy1)
-
-    w00 = (Gx1 - Gx) * (Gy1 - Gy)
-    w01 = (Gx1 - Gx) * (Gy - Gy0)
-    w10 = (Gx - Gx0) * (Gy1 - Gy)
-    w11 = (Gx - Gx0) * (Gy - Gy0)
-
-    pixels = tf.add_n([
-      tf.expand_dims(w00, axis=1) * I00,
-      tf.expand_dims(w01, axis=1) * I01,
-      tf.expand_dims(w10, axis=1) * I10,
-      tf.expand_dims(w11, axis=1) * I11,
-    ])
-    output_h, output_w = self._output_image_size
-    output_map = tf.reshape(pixels, [output_h, output_w, -1])
-    output_map = tf.cast(output_map, dtype=orig_dytpe)
-
-    return output_map
-
   def _batch_sample(self, images, batch_sampling_grid):
     """
     Args:
@@ -195,8 +131,8 @@ class SpatialTransformer(object):
 
     batch_Gx = image_w * batch_G[:,:,0]
     batch_Gy = image_h * batch_G[:,:,1]
-    batch_Gx = tf.maximum(0.0, tf.minimum(batch_Gx, image_w-1.1))
-    batch_Gy = tf.maximum(0.0, tf.minimum(batch_Gy, image_h-1.1))
+    batch_Gx = tf.maximum(0.0, tf.minimum(batch_Gx, image_w-1.01))
+    batch_Gy = tf.maximum(0.0, tf.minimum(batch_Gy, image_h-1.01))
 
     batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32)
     batch_Gx1 = batch_Gx0 + 1

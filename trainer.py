@@ -9,6 +9,7 @@ from rare.builders import preprocessor_builder
 from rare.builders import optimizer_builder
 from rare.utils import variables_helper
 from rare.utils import model_deploy
+from rare.utils import profile_session_run_hooks
 
 
 def _create_input_queue(batch_size_per_clone, create_tensor_dict_fn,
@@ -251,13 +252,16 @@ def train(create_tensor_dict_fn_list, create_model_fn, train_config, master, tas
     stop_hook = tf.train.StopAtStepHook(
       num_steps=(train_config.num_steps if train_config.num_steps else None),
     )
+    profile_hook = profile_session_run_hooks.ProfileAtStepHook(
+      at_step=90,
+      checkpoint_dir=train_dir)
     tf.contrib.training.train(
       train_tensor,
       train_dir,
       master=master,
       is_chief=is_chief,
       scaffold=scaffold,
-      hooks=[stop_hook],
+      hooks=[stop_hook, profile_hook],
       chief_only_hooks=None,
       save_checkpoint_secs=train_config.save_checkpoint_secs,
       save_summaries_steps=train_config.save_summaries_steps,

@@ -33,7 +33,7 @@ class DynamicBidirectionalRnn(object):
         self._rnn_regularizer,
         filter_weights(self._bw_cell.trainable_weights))
 
-      if self._num_output_units:
+      if self._num_output_units > 0:
         with arg_scope(self._fc_hyperparams):
           rnn_outputs = fully_connected(rnn_outputs, self._num_output_units, activation_fn=tf.nn.relu)
 
@@ -83,7 +83,7 @@ class StaticBidirectionalRnn(object):
 
       # output projection
       rnn_outputs = tf.stack(outputs_list, axis=1)
-      if self._num_output_units:
+      if self._num_output_units > 0:
         with arg_scope(self._fc_hyperparams):
           rnn_outputs = fully_connected(
             rnn_outputs,
