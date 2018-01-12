@@ -11,6 +11,7 @@ message Predictor {
   optional string name = 1 [default = "Predictor"];
   oneof predictor_oneof {
     AttentionPredictor attention_predictor = 2;
+    CtcPredictor ctc_predictor = 3;
   }
 }
 
@@ -31,4 +32,8 @@ message AttentionPredictor {
 message LanguageModelRnnCell {
   repeated RnnCell rnn_cell = 1;
   optional string restore_path = 2 [default = ""];
+}
+
+message CtcPredictor {
+  
 }

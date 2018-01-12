@@ -13,8 +13,6 @@ def build(config, is_training):
     return _build_crnn_net(config.crnn_net, is_training)
   elif convnet_oneof == 'resnet':
     return _build_resnet(config.resnet, is_training)
-  elif convnet_oneof == 'stn_resnet':
-    return _build_stn_resnet(config.stn_resnet, is_training)
   elif convnet_oneof == 'stn_convnet':
     return _build_stn_convnet(config.stn_convnet, is_training)
   else:
@@ -32,6 +30,9 @@ def _build_crnn_net(config, is_training):
     crnn_net_class = crnn_net.CrnnNetThreeBranches
   else:
     raise ValueError('Unknown net_type: {}'.format(config.net_type))
+
+  if config.tiny == True:
+    crnn_net_class = crnn_net.CrnnNetTiny
 
   hyperparams_object = hyperparams_builder.build(config.conv_hyperparams, is_training)
 
@@ -72,7 +73,10 @@ def _build_stn_resnet(config, is_training):
 def _build_stn_convnet(config, is_training):
   if not isinstance(config, convnet_pb2.StnConvnet):
     raise ValueError('config is not of type convnet_pb2.StnConvnet')
-  return stn_convnet.StnConvnet(
+  convnet_class = stn_convnet.StnConvnet
+  if config.tiny == True:
+    convnet_class = stn_convnet.StnConvnetTiny
+  return convnet_class(
     conv_hyperparams=hyperparams_builder.build(config.conv_hyperparams, is_training),
     summarize_activations=config.summarize_activations,
     is_training=is_training

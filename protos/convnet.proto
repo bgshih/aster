@@ -7,8 +7,7 @@ message Convnet {
   oneof convnet_oneof {
     CrnnNet crnn_net = 1;
     ResNet resnet = 2;
-    StnResnet stn_resnet = 3;
-    StnConvnet stn_convnet = 4;
+    StnConvnet stn_convnet = 3;
   }
 }
 
@@ -21,6 +20,7 @@ message CrnnNet {
   optional NetType net_type = 1 [default = SINGLE_BRANCH];
   optional Hyperparams conv_hyperparams = 2;
   optional bool summarize_activations = 3 [default=false];
+  optional bool tiny = 4 [default = false];
 }
 
 message ResNet {
@@ -40,12 +40,8 @@ message ResNet {
   optional bool summarize_activations = 4 [default=false];
 }
 
-message StnResnet {
-  optional Hyperparams conv_hyperparams = 1;
-  optional bool summarize_activations = 2 [default=false];
-}
-
 message StnConvnet {
   optional Hyperparams conv_hyperparams = 1;
   optional bool summarize_activations = 2 [default=false];
+  optional bool tiny = 3 [default = false];
 }

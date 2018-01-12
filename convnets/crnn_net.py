@@ -151,3 +151,43 @@ class CrnnNetThreeBranches(CrnnNetMultiBranches):
       feature_maps_dict['branch1/conv7'],
       feature_maps_dict['branch2/conv7'],
     ]
+
+
+class CrnnNetTiny(convnet.Convnet):
+  """For fast prototyping."""
+
+  def _shape_check(self, preprocessed_inputs):
+    preprocessed_inputs.get_shape().assert_has_rank(4)
+    shape_assert = tf.Assert(
+      tf.greater_equal(tf.shape(preprocessed_inputs)[1], 32),
+      ['image height must be at least 32.']
+    )
+    return shape_assert
+
+  def _extract_features(self, preprocessed_inputs):
+    """Extract features
+    Args:
+      preprocessed_inputs: float32 tensor of shape [batch_size, image_height, image_width, 3]
+    Return:
+      feature_maps: a list of extracted feature maps
+    """
+    with arg_scope([conv2d], kernel_size=3, padding='SAME', stride=1), \
+         arg_scope([max_pool2d], stride=2):
+      conv1 = conv2d(preprocessed_inputs, 8, scope='conv1')
+      pool1 = max_pool2d(conv1, 2, scope='pool1')
+      conv2 = conv2d(pool1, 16, scope='conv2')
+      pool2 = max_pool2d(conv2, 2, scope='pool2')
+      conv3 = conv2d(pool2, 32, scope='conv3')
+      conv4 = conv2d(conv3, 64, scope='conv4')
+      pool4 = max_pool2d(conv4, 2, stride=[2, 1], scope='pool4')
+      conv5 = conv2d(pool4, 128, scope='conv5')
+      conv6 = conv2d(conv5, 128, scope='conv6')
+      pool6 = max_pool2d(conv6, 2, stride=[2, 1], scope='pool6')
+      conv7 = conv2d(pool6, 128, kernel_size=[2, 1], padding='VALID', scope='conv7')
+      feature_maps_dict = {
+        'conv1': conv1, 'conv2': conv2, 'conv3': conv3, 'conv4': conv4,
+        'conv5': conv5, 'conv6': conv6, 'conv7': conv7}
+    return feature_maps_dict
+
+  def _output_endpoints(self, feature_maps_dict):
+    return [feature_maps_dict['conv7']]

@@ -131,8 +131,8 @@ class SpatialTransformer(object):
 
     batch_Gx = image_w * batch_G[:,:,0]
     batch_Gy = image_h * batch_G[:,:,1]
-    batch_Gx = tf.maximum(0.0, tf.minimum(batch_Gx, image_w-1.01))
-    batch_Gy = tf.maximum(0.0, tf.minimum(batch_Gy, image_h-1.01))
+    # batch_Gx = tf.maximum(0.0, tf.minimum(batch_Gx, image_w-1.01))
+    # batch_Gy = tf.maximum(0.0, tf.minimum(batch_Gy, image_h-1.01))
 
     batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32)
     batch_Gx1 = batch_Gx0 + 1
