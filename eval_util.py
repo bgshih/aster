@@ -24,6 +24,7 @@ import numpy as np
 import tensorflow as tf
 
 from rare.utils import recognition_evaluation
+from rare.utils import visualization_utils as vis_utils
 
 
 def write_metrics(metrics, global_step, summary_dir):
@@ -321,3 +322,15 @@ def evaluate_recognition_results(result_lists):
     'WordAccuracy': word_accuracy
   }
   return metrics
+
+
+def visualize_recognition_results(result_dict, tag, global_step,
+                                  summary_dir=None, export_dir=None, summary_writer=None):
+  image = np.copy(result_dict['original_image'])
+  control_points = result_dict['control_points'][0]
+  vis_utils.draw_keypoints_on_image_array(image, control_points[:,::-1], radius=1)
+  summary = tf.Summary(value=[
+      tf.Summary.Value(tag=tag, image=tf.Summary.Image(
+          encoded_image_string=vis_utils.encode_image_array_as_png_bytes(image)))])
+  summary_writer.add_summary(summary, global_step)
+  logging.info('Detection visualizations written to summary with tag %s.', tag)

@@ -21,8 +21,9 @@ def _extract_prediction_tensors(model,
   input_dict = create_input_dict_fn()
   prefetch_queue = prefetcher.prefetch(input_dict, capacity=500)
   input_dict = prefetch_queue.dequeue()
-  original_image = input_dict[fields.InputDataFields.image]
+  original_image = tf.to_float(input_dict[fields.InputDataFields.image])
   original_image_shape = tf.shape(original_image)
+  input_dict[fields.InputDataFields.image] = original_image
 
   # data preprocessing
   preprocessed_input_dict = preprocessor.preprocess(input_dict, data_preprocessing_steps)
@@ -39,8 +40,11 @@ def _extract_prediction_tensors(model,
     'preprocessed_image_shape': preprocessed_image_shape,
     'filename': preprocessed_input_dict[fields.InputDataFields.filename],
     'groundtruth_text': input_dict[fields.InputDataFields.groundtruth_text],
-    'recognition_text': recognitions['text'][0]
+    'recognition_text': recognitions['text'][0],
   }
+  if 'control_points' in predictions_dict:
+    tensor_dict.update({'control_points': predictions_dict['control_points']})
+
   return tensor_dict
 
 
@@ -58,6 +62,8 @@ def evaluate(create_input_dict_fn, create_model_fn, eval_config,
       data_preprocessing_steps=data_preprocessing_steps,
       ignore_groundtruth=eval_config.ignore_groundtruth)
 
+  summary_writer = tf.summary.FileWriter(eval_dir)
+
   def _process_batch(tensor_dict, sess, batch_index, counters, update_op):
     if batch_index >= eval_config.num_visualizations:
       if 'original_image' in tensor_dict:
@@ -72,16 +78,13 @@ def evaluate(create_input_dict_fn, create_model_fn, eval_config,
       return {}
     global_step = tf.train.global_step(sess, tf.train.get_global_step())
     if batch_index < eval_config.num_visualizations:
-      raise NotImplementedError
-
-      eval_util.print_recognition_results(
+      eval_util.visualize_recognition_results(
           result_dict,
-          tag,
+          'Recognition_{}'.format(batch_index),
           global_step,
           summary_dir=eval_dir,
           export_dir=eval_config.visualization_export_dir,
-          show_groundtruth=False,
-          show_segments_and_links=False)
+          summary_writer=summary_writer)
 
     return result_dict
 
@@ -120,3 +123,5 @@ def evaluate(create_input_dict_fn, create_model_fn, eval_config,
       master=eval_config.eval_master,
       save_graph=eval_config.save_graph,
       save_graph_dir=(eval_dir if eval_config.save_graph else ''))
+
+  summary_writer.close()
