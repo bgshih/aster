@@ -124,28 +124,25 @@ class SpatialTransformer(object):
     """
     if images.dtype != tf.float32:
       raise ValueError('image must be of type tf.float32')
-    # batch_G = tf.maximum(0.0, tf.minimum(1.0, batch_sampling_grid)) # => [B, n, 2]
     batch_G = batch_sampling_grid
     batch_size, image_h, image_w, _ = shape_utils.combined_static_and_dynamic_shape(images)
     n = shape_utils.combined_static_and_dynamic_shape(batch_sampling_grid)[1]
 
     batch_Gx = image_w * batch_G[:,:,0]
     batch_Gy = image_h * batch_G[:,:,1]
-    # batch_Gx = tf.maximum(0.0, tf.minimum(batch_Gx, image_w-1.01))
-    # batch_Gy = tf.maximum(0.0, tf.minimum(batch_Gy, image_h-1.01))
+    batch_Gx = tf.clip_by_value(batch_Gx, 0., image_w-1.01)
+    batch_Gy = tf.clip_by_value(batch_Gy, 0., image_h-1.01)
 
-    batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32)
-    batch_Gx1 = batch_Gx0 + 1
+    batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32) # G* => [batch_size, n, 2]
+    batch_Gx1 = batch_Gx0 + 1 # G*x, G*y => [batch_size, n]
     batch_Gy0 = tf.cast(tf.floor(batch_Gy), tf.int32)
     batch_Gy1 = batch_Gy0 + 1
-    # G* => [batch_size, n, 2]
-    # G*x, G*y => [batch_size, n]
 
     def _get_pixels(images, batch_x, batch_y, batch_indices):
       indices = tf.stack([batch_indices, batch_y, batch_x], axis=2) # => [B, n, 3]
       pixels = tf.gather_nd(images, indices)
       return pixels
-    
+
     batch_indices = tf.tile(
       tf.expand_dims(tf.range(batch_size), 1),
       [1, n]) # => [B, n]
