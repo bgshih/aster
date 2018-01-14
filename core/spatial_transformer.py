@@ -72,7 +72,7 @@ class SpatialTransformer(object):
       # ctrl_pts = tf.sigmoid(fc2)
       fc2_weights_initializer = tf.zeros_initializer()
       fc2_biases_initializer = tf.constant_initializer(self._init_bias)
-      fc2 = fully_connected(fc1, 2 * k,
+      fc2 = fully_connected(0.1 * fc1, 2 * k,
         weights_initializer=fc2_weights_initializer,
         biases_initializer=fc2_biases_initializer,
         activation_fn=None,
@@ -80,7 +80,8 @@ class SpatialTransformer(object):
       if self._summarize_activations:
         tf.summary.histogram('fc1', fc1)
         tf.summary.histogram('fc2', fc2)
-    ctrl_pts = tf.sigmoid(fc2)
+    # ctrl_pts = tf.sigmoid(fc2)
+    ctrl_pts = fc2
     ctrl_pts = tf.reshape(ctrl_pts, [batch_size, k, 2])
     return ctrl_pts
 
@@ -133,8 +134,8 @@ class SpatialTransformer(object):
 
     batch_Gx = image_w * batch_G[:,:,0]
     batch_Gy = image_h * batch_G[:,:,1]
-    # batch_Gx = tf.clip_by_value(batch_Gx, 0., image_w-1.01)
-    # batch_Gy = tf.clip_by_value(batch_Gy, 0., image_h-1.01)
+    batch_Gx = tf.clip_by_value(batch_Gx, 0., image_w-2)
+    batch_Gy = tf.clip_by_value(batch_Gy, 0., image_h-2)
 
     batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32) # G* => [batch_size, n, 2]
     batch_Gx1 = batch_Gx0 + 1 # G*x, G*y => [batch_size, n]
@@ -248,7 +249,7 @@ class SpatialTransformer(object):
     init_biases = -np.log(1. / init_ctrl_pts - 1.)
     return init_biases
 
-  def _build_init_bias_sine_pattern(self):
+  def _build_init_bias_sine_pattern(self, logit=False):
     num_ctrl_pts_per_side = self._num_control_points // 2
     upper_x = np.linspace(0.05, 0.95, num=num_ctrl_pts_per_side)
     upper_y = 0.25 + 0.2 * np.sin(2 * np.pi * upper_x)
@@ -258,5 +259,8 @@ class SpatialTransformer(object):
       np.stack([upper_x, upper_y], axis=1),
       np.stack([lower_x, lower_y], axis=1),
     ], axis=0)
-    init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    if logit:
+      init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    else:
+      init_biases = init_ctrl_pts
     return init_biases

@@ -22,7 +22,6 @@ class ProfileAtStepHook(session_run_hook.SessionRunHook):
 
   def before_run(self, run_context):  # pylint: disable=unused-argument
     if self._do_profile:
-      
       options = tf.RunOptions(trace_level=self._trace_level)
     else:
       options = None
