@@ -16,7 +16,6 @@ class SpatialTransformer(object):
                localization_image_size=None,
                output_image_size=None,
                num_control_points=None,
-               margin=0.05,
                init_bias_pattern=None,
                summarize_activations=False):
     self._convnet = convnet
@@ -24,12 +23,11 @@ class SpatialTransformer(object):
     self._localization_image_size = localization_image_size
     self._output_image_size = output_image_size
     self._num_control_points = num_control_points
-    self._margin = margin
     self._init_bias_pattern = init_bias_pattern
     self._summarize_activations = summarize_activations
 
     self._output_grid = self._build_output_grid()
-    self._output_ctrl_pts = self._build_output_control_points(margin)
+    self._output_ctrl_pts = self._build_output_control_points()
     self._inv_delta_c = self._build_helper_constants()
 
     if self._init_bias_pattern == 'slope':
@@ -70,6 +68,8 @@ class SpatialTransformer(object):
     conv_output = tf.reshape(conv_output, [batch_size, -1])
     with arg_scope(self._fc_hyperparams):
       fc1 = fully_connected(conv_output, 512)
+      # fc2 = fully_connected(fc1, 2 * k, activation_fn=None, normalizer_fn=None)
+      # ctrl_pts = tf.sigmoid(fc2)
       fc2_weights_initializer = tf.zeros_initializer()
       fc2_biases_initializer = tf.constant_initializer(self._init_bias)
       fc2 = fully_connected(fc1, 2 * k,
@@ -77,7 +77,10 @@ class SpatialTransformer(object):
         biases_initializer=fc2_biases_initializer,
         activation_fn=None,
         normalizer_fn=None)
-    ctrl_pts = 0.99 * tf.sigmoid(fc2)
+      if self._summarize_activations:
+        tf.summary.histogram('fc1', fc1)
+        tf.summary.histogram('fc2', fc2)
+    ctrl_pts = tf.sigmoid(fc2)
     ctrl_pts = tf.reshape(ctrl_pts, [batch_size, k, 2])
     return ctrl_pts
 
@@ -130,8 +133,8 @@ class SpatialTransformer(object):
 
     batch_Gx = image_w * batch_G[:,:,0]
     batch_Gy = image_h * batch_G[:,:,1]
-    batch_Gx = tf.clip_by_value(batch_Gx, 0., image_w-1.01)
-    batch_Gy = tf.clip_by_value(batch_Gy, 0., image_h-1.01)
+    # batch_Gx = tf.clip_by_value(batch_Gx, 0., image_w-1.01)
+    # batch_Gy = tf.clip_by_value(batch_Gy, 0., image_h-1.01)
 
     batch_Gx0 = tf.cast(tf.floor(batch_Gx), tf.int32) # G* => [batch_size, n, 2]
     batch_Gx1 = batch_Gx0 + 1 # G*x, G*y => [batch_size, n]
@@ -189,11 +192,11 @@ class SpatialTransformer(object):
       axis=2)
     return output_grid
 
-  def _build_output_control_points(self, margin):
+  def _build_output_control_points(self):
     num_ctrl_pts_per_side = self._num_control_points // 2
-    ctrl_pts_x = np.linspace(margin, 1-margin, num_ctrl_pts_per_side)
-    ctrl_pts_y_top = np.ones(num_ctrl_pts_per_side) * margin
-    ctrl_pts_y_bottom = np.ones(num_ctrl_pts_per_side) * (1 - margin)
+    ctrl_pts_x = np.linspace(0., 1., num_ctrl_pts_per_side)
+    ctrl_pts_y_top = np.ones(num_ctrl_pts_per_side) * 0.
+    ctrl_pts_y_bottom = np.ones(num_ctrl_pts_per_side) * 1.
     ctrl_pts_top = np.stack([ctrl_pts_x, ctrl_pts_y_top], axis=1)
     ctrl_pts_bottom = np.stack([ctrl_pts_x, ctrl_pts_y_bottom], axis=1)
     output_ctrl_pts = np.concatenate([ctrl_pts_top, ctrl_pts_bottom], axis=0)
@@ -221,10 +224,10 @@ class SpatialTransformer(object):
 
   def _build_init_bias_slope_pattern(self):
     num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    upper_y = np.linspace(self._margin, 0.3, num=num_ctrl_pts_per_side)
-    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    lower_y = np.linspace(0.7, 1-self._margin, num=num_ctrl_pts_per_side)
+    upper_x = np.linspace(0., 1, num=num_ctrl_pts_per_side)
+    upper_y = np.linspace(0., 0.3, num=num_ctrl_pts_per_side)
+    lower_x = np.linspace(0., 1., num=num_ctrl_pts_per_side)
+    lower_y = np.linspace(0.7, 1., num=num_ctrl_pts_per_side)
     init_ctrl_pts = np.concatenate([
       np.stack([upper_x, upper_y], axis=1),
       np.stack([lower_x, lower_y], axis=1),
@@ -234,10 +237,10 @@ class SpatialTransformer(object):
 
   def _build_init_bias_identity_pattern(self):
     num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    upper_y = np.linspace(self._margin, self._margin, num=num_ctrl_pts_per_side)
-    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    lower_y = np.linspace(1-self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
+    upper_x = np.linspace(0.0, 1.0, num=num_ctrl_pts_per_side)
+    upper_y = np.linspace(0.0, 0.0, num=num_ctrl_pts_per_side)
+    lower_x = np.linspace(0.0, 1.0, num=num_ctrl_pts_per_side)
+    lower_y = np.linspace(1.0, 1.0, num=num_ctrl_pts_per_side)
     init_ctrl_pts = np.concatenate([
       np.stack([upper_x, upper_y], axis=1),
       np.stack([lower_x, lower_y], axis=1),
@@ -247,25 +250,13 @@ class SpatialTransformer(object):
 
   def _build_init_bias_sine_pattern(self):
     num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    upper_y = 0.3 + 0.2 * np.sin(2 * np.pi * upper_x)
-    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    lower_y = 0.7 + 0.2 * np.sin(2 * np.pi * lower_x)
+    upper_x = np.linspace(0.05, 0.95, num=num_ctrl_pts_per_side)
+    upper_y = 0.25 + 0.2 * np.sin(2 * np.pi * upper_x)
+    lower_x = np.linspace(0.05, 0.95, num=num_ctrl_pts_per_side)
+    lower_y = 0.75 + 0.2 * np.sin(2 * np.pi * lower_x)
     init_ctrl_pts = np.concatenate([
       np.stack([upper_x, upper_y], axis=1),
       np.stack([lower_x, lower_y], axis=1),
     ], axis=0)
     init_biases = -np.log(1. / init_ctrl_pts - 1.)
     return init_biases
-
-  def _build_ref_ctrl_pts(self):
-    num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    upper_y = np.linspace(0.3, 0.3, num=num_ctrl_pts_per_side)
-    lower_x = np.linspace(self._margin, 1-self._margin, num=num_ctrl_pts_per_side)
-    lower_y = np.linspace(0.7, 0.7, num=num_ctrl_pts_per_side)
-    ref_ctrl_pts = np.concatenate([
-      np.stack([upper_x, upper_y], axis=1),
-      np.stack([lower_x, lower_y], axis=1),
-    ], axis=0).flatten()
-    return tf.constant(ref_ctrl_pts, tf.float32)

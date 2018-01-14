@@ -253,7 +253,7 @@ def train(create_tensor_dict_fn_list, create_model_fn, train_config, master, tas
       num_steps=(train_config.num_steps if train_config.num_steps else None),
     )
     profile_hook = profile_session_run_hooks.ProfileAtStepHook(
-      at_step=90,
+      at_step=200,
       checkpoint_dir=train_dir)
     tf.contrib.training.train(
       train_tensor,

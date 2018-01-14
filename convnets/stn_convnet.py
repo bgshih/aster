@@ -29,7 +29,9 @@ class StnConvnet(convnet.Convnet):
       conv5 = conv2d(pool4, 256, scope='conv5')  # 4
       pool5 = max_pool2d(conv5, scope='pool5')
       conv6 = conv2d(pool5, 256, scope='conv6')  # 2
-      feature_maps_dict = { 'conv6': conv6 }
+      feature_maps_dict = {
+        'conv1': conv1, 'conv2': conv2, 'conv3': conv3,
+        'conv4': conv4, 'conv5': conv5, 'conv6': conv6 }
     return feature_maps_dict
 
   def _output_endpoints(self, feature_maps_dict):
@@ -58,7 +60,9 @@ class StnConvnetTiny(convnet.Convnet):
       conv5 = conv2d(pool4, 64, scope='conv5')  # 4
       pool5 = max_pool2d(conv5, scope='pool5')
       conv6 = conv2d(pool5, 64, scope='conv6')  # 2
-      feature_maps_dict = { 'conv6': conv6 }
+      feature_maps_dict = {
+        'conv1': conv1, 'conv2': conv2, 'conv3': conv3,
+        'conv4': conv4, 'conv5': conv5, 'conv6': conv6 }
     return feature_maps_dict
 
   def _output_endpoints(self, feature_maps_dict):

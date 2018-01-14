@@ -18,7 +18,6 @@ message SpatialTransformer {
   optional int32 output_w = 6 [default = 100];
 
   optional int32 num_control_points = 7 [default = 20];
-  optional float margin = 8 [default = 0.05];
 
   optional string init_bias_pattern = 9 [default = "random"];
 
