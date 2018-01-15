@@ -17,6 +17,8 @@ class SpatialTransformer(object):
                output_image_size=None,
                num_control_points=None,
                init_bias_pattern=None,
+               activation=None,
+               margins=None,
                summarize_activations=False):
     self._convnet = convnet
     self._fc_hyperparams = fc_hyperparams
@@ -24,22 +26,14 @@ class SpatialTransformer(object):
     self._output_image_size = output_image_size
     self._num_control_points = num_control_points
     self._init_bias_pattern = init_bias_pattern
+    self._margins = margins
+    self._activation = activation
     self._summarize_activations = summarize_activations
 
     self._output_grid = self._build_output_grid()
-    self._output_ctrl_pts = self._build_output_control_points()
+    self._output_ctrl_pts = self._build_output_control_points(self._margins)
     self._inv_delta_c = self._build_helper_constants()
-
-    if self._init_bias_pattern == 'slope':
-      self._init_bias = self._build_init_bias_slope_pattern()
-    elif self._init_bias_pattern == 'identity':
-      self._init_bias = self._build_init_bias_identity_pattern()
-    elif self._init_bias_pattern == 'sine':
-      self._init_bias = self._build_init_bias_sine_pattern()
-    elif self._init_bias_pattern == 'random':
-      self._init_bias = None
-    else:
-      raise ValueError('Unknown init bias pattern: {}'.format(self._init_bias_pattern))
+    self._init_bias = self._build_init_bias(init_bias_pattern, self._margins, self._activation)
 
   def batch_transform(self, preprocessed_inputs):
     with tf.variable_scope('LocalizationNet', [preprocessed_inputs]):
@@ -80,8 +74,12 @@ class SpatialTransformer(object):
       if self._summarize_activations:
         tf.summary.histogram('fc1', fc1)
         tf.summary.histogram('fc2', fc2)
-    # ctrl_pts = tf.sigmoid(fc2)
-    ctrl_pts = fc2
+    if self._activation == 'sigmoid':
+      ctrl_pts = tf.sigmoid(fc2)
+    elif self._activation == 'none':
+      ctrl_pts = fc2
+    else:
+      raise ValueError('Unknown activation: {}'.format(self._activation))
     ctrl_pts = tf.reshape(ctrl_pts, [batch_size, k, 2])
     return ctrl_pts
 
@@ -193,11 +191,12 @@ class SpatialTransformer(object):
       axis=2)
     return output_grid
 
-  def _build_output_control_points(self):
+  def _build_output_control_points(self, margins):
+    margin_x, margin_y = margins
     num_ctrl_pts_per_side = self._num_control_points // 2
-    ctrl_pts_x = np.linspace(0., 1., num_ctrl_pts_per_side)
-    ctrl_pts_y_top = np.ones(num_ctrl_pts_per_side) * 0.
-    ctrl_pts_y_bottom = np.ones(num_ctrl_pts_per_side) * 1.
+    ctrl_pts_x = np.linspace(margin_x, 1.0 - margin_x, num_ctrl_pts_per_side)
+    ctrl_pts_y_top = np.ones(num_ctrl_pts_per_side) * margin_y
+    ctrl_pts_y_bottom = np.ones(num_ctrl_pts_per_side) * (1.0 - margin_y)
     ctrl_pts_top = np.stack([ctrl_pts_x, ctrl_pts_y_top], axis=1)
     ctrl_pts_bottom = np.stack([ctrl_pts_x, ctrl_pts_y_bottom], axis=1)
     output_ctrl_pts = np.concatenate([ctrl_pts_top, ctrl_pts_bottom], axis=0)
@@ -223,44 +222,34 @@ class SpatialTransformer(object):
     inv_delta_C = np.linalg.inv(delta_C)
     return inv_delta_C
 
-  def _build_init_bias_slope_pattern(self):
+  def _build_init_bias(self, pattern, margins, activation):
+    margin_x, margin_y = margins
     num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(0., 1, num=num_ctrl_pts_per_side)
-    upper_y = np.linspace(0., 0.3, num=num_ctrl_pts_per_side)
-    lower_x = np.linspace(0., 1., num=num_ctrl_pts_per_side)
-    lower_y = np.linspace(0.7, 1., num=num_ctrl_pts_per_side)
-    init_ctrl_pts = np.concatenate([
-      np.stack([upper_x, upper_y], axis=1),
-      np.stack([lower_x, lower_y], axis=1),
-    ], axis=0)
-    init_biases = -np.log(1. / init_ctrl_pts - 1.)
-    return init_biases
+    upper_x = np.linspace(margin_x, 1.0-margin_x, num=num_ctrl_pts_per_side)
+    lower_x = np.linspace(margin_x, 1.0-margin_x, num=num_ctrl_pts_per_side)
 
-  def _build_init_bias_identity_pattern(self):
-    num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(0.0, 1.0, num=num_ctrl_pts_per_side)
-    upper_y = np.linspace(0.0, 0.0, num=num_ctrl_pts_per_side)
-    lower_x = np.linspace(0.0, 1.0, num=num_ctrl_pts_per_side)
-    lower_y = np.linspace(1.0, 1.0, num=num_ctrl_pts_per_side)
-    init_ctrl_pts = np.concatenate([
-      np.stack([upper_x, upper_y], axis=1),
-      np.stack([lower_x, lower_y], axis=1),
-    ], axis=0)
-    init_biases = -np.log(1. / init_ctrl_pts - 1.)
-    return init_biases
-
-  def _build_init_bias_sine_pattern(self, logit=False):
-    num_ctrl_pts_per_side = self._num_control_points // 2
-    upper_x = np.linspace(0.05, 0.95, num=num_ctrl_pts_per_side)
-    upper_y = 0.25 + 0.2 * np.sin(2 * np.pi * upper_x)
-    lower_x = np.linspace(0.05, 0.95, num=num_ctrl_pts_per_side)
-    lower_y = 0.75 + 0.2 * np.sin(2 * np.pi * lower_x)
-    init_ctrl_pts = np.concatenate([
-      np.stack([upper_x, upper_y], axis=1),
-      np.stack([lower_x, lower_y], axis=1),
-    ], axis=0)
-    if logit:
-      init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    if pattern == 'slope':
+      upper_y = np.linspace(margin_y, 0.3, num=num_ctrl_pts_per_side)
+      lower_y = np.linspace(0.7, 1.0-margin_y, num=num_ctrl_pts_per_side)
+    elif pattern == 'identity':
+      upper_y = np.linspace(margin_y, margin_y, num=num_ctrl_pts_per_side)
+      lower_y = np.linspace(1.0-margin_y, 1.0-margin_y, num=num_ctrl_pts_per_side)
+    elif pattern == 'sine':
+      upper_y = 0.25 + 0.2 * np.sin(2 * np.pi * upper_x)
+      lower_y = 0.75 + 0.2 * np.sin(2 * np.pi * lower_x)
     else:
+      raise ValueError('Unknown initialization pattern: {}'.format(pattern))
+
+    init_ctrl_pts = np.concatenate([
+      np.stack([upper_x, upper_y], axis=1),
+      np.stack([lower_x, lower_y], axis=1),
+    ], axis=0)
+
+    if activation == 'sigmoid':
+      init_biases = -np.log(1. / init_ctrl_pts - 1.)
+    elif activation == 'none':
       init_biases = init_ctrl_pts
+    else:
+      raise ValueError('Unknown activation type: {}'.format(activation))
+    
     return init_biases

@@ -17,9 +17,11 @@ message SpatialTransformer {
   optional int32 output_h = 5 [default = 32];
   optional int32 output_w = 6 [default = 100];
 
-  optional int32 num_control_points = 7 [default = 20];
+  optional float margin_x = 7 [default = 0.1];
+  optional float margin_y = 8 [default = 0.1];
 
-  optional string init_bias_pattern = 9 [default = "random"];
-
-  optional bool summarize_activations = 10 [default = false];
+  optional int32 num_control_points = 9 [default = 20];
+  optional string init_bias_pattern = 10 [default = "identity"];
+  optional string activation = 11 [default = "none"];
+  optional bool summarize_activations = 12 [default = false];
 }

@@ -19,5 +19,7 @@ def build(config, is_training):
     output_image_size=(config.output_h, config.output_w),
     num_control_points=config.num_control_points,
     init_bias_pattern=config.init_bias_pattern,
+    margins=(config.margin_x, config.margin_y),
+    activation=config.activation,
     summarize_activations=config.summarize_activations
   )
