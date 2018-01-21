@@ -88,7 +88,7 @@ class AttentionPredictor(predictor.Predictor):
         }
       else:
         assert isinstance(outputs, seq2seq.FinalBeamSearchDecoderOutput)
-        prediction_labels = outputs.beam_search_decoder_output.predicted_ids[:,:,0]
+        prediction_labels = outputs.predicted_ids[:,:,0]
         prediction_lengths = output_lengths[:,0]
         prediction_scores = tf.gather_nd(
           outputs.beam_search_decoder_output.scores[:,:,0],

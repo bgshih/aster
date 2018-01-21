@@ -8,6 +8,8 @@ message EvalConfig {
   // Number of visualization images to generate.
   optional uint32 num_visualizations = 1 [default=10];
 
+  optional bool only_visualize_incorrect = 14 [default=false];
+
   // Number of examples to process of evaluation.
   optional uint32 num_examples = 2 [default=5000];
 

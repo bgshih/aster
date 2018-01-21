@@ -39,7 +39,10 @@ class MultiPredictorsRecognitionModel(model.Model):
       transform_output_dict = self._spatial_transformer.batch_transform(stn_inputs)
       preprocessed_inputs = transform_output_dict['rectified_images']
       control_points = transform_output_dict['control_points']
-      predictions_dict.update({ 'control_points': control_points })
+      predictions_dict.update({
+        'control_points': control_points,
+        'rectified_images': transform_output_dict['rectified_images']
+      })
     else:
       preprocessed_inputs = self.preprocess(resized_images)
     with tf.variable_scope(None, 'FeatureExtractor', [preprocessed_inputs]) as feat_scope:

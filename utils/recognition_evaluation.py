@@ -2,6 +2,8 @@ import string
 import logging
 
 import numpy as np
+import edit_distance
+
 
 class RecognitionEvaluation(object):
   def __init__(self):
@@ -38,6 +40,7 @@ class RecognitionEvaluation(object):
 
     num_correct = 0
     num_incorrect = 0
+    total_edit_distance = 0
     incorrect_pairs = []
     for i in range(num_samples):
       recogition = _normalize_text(self.all_recognition_text[i])
@@ -47,11 +50,19 @@ class RecognitionEvaluation(object):
       else:
         num_incorrect += 1
         incorrect_pairs.append((recogition, groundtruth))
+      sm = edit_distance.SequenceMatcher(a=recogition, b=groundtruth)
+      normalized_ed = sm.distance() / len(groundtruth)
+      total_edit_distance += normalized_ed
     num_print = min(len(incorrect_pairs), 100)
-    print('*** Groundtruth => Prediction ***')
-    for i in range(num_print):
-      recogition, groundtruth = incorrect_pairs[i]
-      print('{} => {}'.format(groundtruth, recogition))
-    print('**********************************')
+    # print('*** Groundtruth => Prediction ***')
+    # for i in range(num_print):
+    #   recogition, groundtruth = incorrect_pairs[i]
+    #   print('{} => {}'.format(groundtruth, recogition))
+    # print('**********************************')
     case_insensitive_accuracy = num_correct / (num_correct + num_incorrect)
-    return case_insensitive_accuracy
+
+    metrics = {
+      'WordAccuracy': case_insensitive_accuracy,
+      'TotalEditDistance': total_edit_distance,
+    }
+    return metrics

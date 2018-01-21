@@ -1,3 +1,4 @@
+import os
 import logging
 import tensorflow as tf
 
@@ -43,7 +44,10 @@ def _extract_prediction_tensors(model,
     'recognition_text': recognitions['text'][0],
   }
   if 'control_points' in predictions_dict:
-    tensor_dict.update({'control_points': predictions_dict['control_points']})
+    tensor_dict.update({
+      'control_points': predictions_dict['control_points'],
+      'rectified_images': predictions_dict['rectified_images']
+    })
 
   return tensor_dict
 
@@ -83,8 +87,9 @@ def evaluate(create_input_dict_fn, create_model_fn, eval_config,
           'Recognition_{}'.format(batch_index),
           global_step,
           summary_dir=eval_dir,
-          export_dir=eval_config.visualization_export_dir,
-          summary_writer=summary_writer)
+          export_dir=os.path.join(eval_dir, 'vis'),
+          summary_writer=summary_writer,
+          only_visualize_incorrect=eval_config.only_visualize_incorrect)
 
     return result_dict
 

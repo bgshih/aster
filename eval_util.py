@@ -22,6 +22,9 @@ import time
 
 import numpy as np
 import tensorflow as tf
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from rare.utils import recognition_evaluation
 from rare.utils import visualization_utils as vis_utils
@@ -316,21 +319,70 @@ def evaluate_recognition_results(result_lists):
         image_id,
         result_lists['recognition_text'][idx],
         result_lists['groundtruth_text'][idx])
-
-  word_accuracy = evaluator.evaluate_all()
-  metrics = {
-    'WordAccuracy': word_accuracy
-  }
-  return metrics
+  return evaluator.evaluate_all()
 
 
 def visualize_recognition_results(result_dict, tag, global_step,
-                                  summary_dir=None, export_dir=None, summary_writer=None):
-  image = np.copy(result_dict['original_image'])
+                                  summary_dir=None,
+                                  export_dir=None,
+                                  summary_writer=None,
+                                  only_visualize_incorrect=False):
+  import string
+  from scipy.misc import imresize
+
   control_points = result_dict['control_points'][0]
-  vis_utils.draw_keypoints_on_image_array(image, control_points[:,::-1], radius=1)
-  summary = tf.Summary(value=[
-      tf.Summary.Value(tag=tag, image=tf.Summary.Image(
-          encoded_image_string=vis_utils.encode_image_array_as_png_bytes(image)))])
-  summary_writer.add_summary(summary, global_step)
-  logging.info('Detection visualizations written to summary with tag %s.', tag)
+  # vis_utils.draw_keypoints_on_image_array(image, control_points[:,::-1], radius=1)
+  # summary = tf.Summary(value=[
+  #     tf.Summary.Value(tag=tag, image=tf.Summary.Image(
+  #         encoded_image_string=vis_utils.encode_image_array_as_png_bytes(image)))])
+  # summary_writer.add_summary(summary, global_step)
+  # logging.info('Detection visualizations written to summary with tag %s.', tag)
+
+  # export visualization
+  fig = plt.figure(frameon=False)
+  ax = plt.Axes(fig, [0., 0., 1., 1.])
+  ax.set_axis_off()
+  fig.add_axes(ax)
+
+  image = result_dict['original_image']
+  image_h, image_w, _ = image.shape
+  image = imresize(image, (128. / image_w))
+
+  ax.imshow(image)
+  image_h, image_w, _ = image.shape
+  ax.imshow(image.astype(np.uint8))
+  ax.scatter(control_points[:,0] * image_w, control_points[:,1] * image_h, marker='+', c='#42f4aa', s=100)
+
+  def _normalize_text(text):
+    text = ''.join(filter(lambda x: x in (string.digits + string.ascii_letters), text))
+    return text.lower()
+
+  gt_text = _normalize_text(result_dict['groundtruth_text'].decode('utf-8'))
+  rec_text = _normalize_text(result_dict['recognition_text'].decode('utf-8'))
+
+  if only_visualize_incorrect and gt_text == rec_text:
+    return
+
+  # plt.title(result_dict['groundtruth_text'].decode('utf-8'))
+
+  # plt.subplot(2,1,2)
+  
+  # plt.imshow(rectified_image)
+  # plt.title(result_dict['recognition_text'].decode('utf-8'))
+
+  if not os.path.exists(export_dir):
+    os.makedirs(export_dir)
+  save_path = os.path.join(export_dir, tag + '_original_{}_{}'.format(gt_text, rec_text) + '.pdf')
+  plt.savefig(save_path, bbox_inches='tight')
+  logging.info('Detailed visualization exported to {}'.format(save_path))
+
+  rectified_image = result_dict['rectified_images'][0]
+  rectified_image = (127.5 * (rectified_image + 1.0)).astype(np.uint8)
+  ax.clear()
+  ax.set_axis_off()
+  ax.imshow(rectified_image)
+  save_path = os.path.join(export_dir, tag + '_rectified' + '.pdf')
+  plt.savefig(save_path, bbox_inches='tight')
+  logging.info('Detailed visualization exported to {}'.format(save_path))
+
+  plt.close()
