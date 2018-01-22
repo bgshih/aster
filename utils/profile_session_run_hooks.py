@@ -2,6 +2,7 @@ import os
 import logging
 
 import tensorflow as tf
+from tensorflow.python.client import timeline
 from tensorflow.python.training import training_util
 from tensorflow.python.training import session_run_hook
 
@@ -33,6 +34,11 @@ class ProfileAtStepHook(session_run_hook.SessionRunHook):
       self._do_profile = False
       self._writer.add_run_metadata(run_values.run_metadata,
                                     'trace_{}'.format(global_step), global_step)
-      logging.info('Profile trace saved at {}'.format(global_step))
+      timeline_object = timeline.Timeline(run_values.run_metadata.step_stats)
+      chrome_trace = timeline_object.generate_chrome_trace_format()
+      chrome_trace_save_path = 'timeline_{}.json'.format(global_step)
+      with open(chrome_trace_save_path, 'w') as f:
+        f.write(chrome_trace)
+      logging.info('Profile trace saved to {}'.format(chrome_trace_save_path))
     if global_step == self._at_step:
       self._do_profile = True

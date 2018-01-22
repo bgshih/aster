@@ -261,7 +261,7 @@ def train(create_tensor_dict_fn_list, create_model_fn, train_config, master, tas
       master=master,
       is_chief=is_chief,
       scaffold=scaffold,
-      hooks=[stop_hook],
+      hooks=[stop_hook, profile_hook],
       chief_only_hooks=None,
       save_checkpoint_secs=train_config.save_checkpoint_secs,
       save_summaries_steps=train_config.save_summaries_steps,
