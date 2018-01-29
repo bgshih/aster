@@ -330,7 +330,6 @@ def visualize_recognition_results(result_dict, tag, global_step,
   import string
   from scipy.misc import imresize
 
-  control_points = result_dict['control_points'][0]
   # vis_utils.draw_keypoints_on_image_array(image, control_points[:,::-1], radius=1)
   # summary = tf.Summary(value=[
   #     tf.Summary.Value(tag=tag, image=tf.Summary.Image(
@@ -351,7 +350,10 @@ def visualize_recognition_results(result_dict, tag, global_step,
   ax.imshow(image)
   image_h, image_w, _ = image.shape
   ax.imshow(image.astype(np.uint8))
-  ax.scatter(control_points[:,0] * image_w, control_points[:,1] * image_h, marker='+', c='#42f4aa', s=100)
+
+  if 'control_points' in result_dict:
+    control_points = result_dict['control_points'][0]
+    ax.scatter(control_points[:,0] * image_w, control_points[:,1] * image_h, marker='+', c='#42f4aa', s=100)
 
   def _normalize_text(text):
     text = ''.join(filter(lambda x: x in (string.digits + string.ascii_letters), text))
@@ -376,13 +378,14 @@ def visualize_recognition_results(result_dict, tag, global_step,
   plt.savefig(save_path, bbox_inches='tight')
   logging.info('Detailed visualization exported to {}'.format(save_path))
 
-  rectified_image = result_dict['rectified_images'][0]
-  rectified_image = (127.5 * (rectified_image + 1.0)).astype(np.uint8)
-  ax.clear()
-  ax.set_axis_off()
-  ax.imshow(rectified_image)
-  save_path = os.path.join(export_dir, tag + '_rectified' + '.pdf')
-  plt.savefig(save_path, bbox_inches='tight')
-  logging.info('Detailed visualization exported to {}'.format(save_path))
+  if 'rectified_images' in result_dict:
+    rectified_image = result_dict['rectified_images'][0]
+    rectified_image = (127.5 * (rectified_image + 1.0)).astype(np.uint8)
+    ax.clear()
+    ax.set_axis_off()
+    ax.imshow(rectified_image)
+    save_path = os.path.join(export_dir, tag + '_rectified' + '.pdf')
+    plt.savefig(save_path, bbox_inches='tight')
+    logging.info('Detailed visualization exported to {}'.format(save_path))
 
   plt.close()
