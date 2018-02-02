@@ -26,6 +26,8 @@ class TfExampleDecoder(object):
         tf.FixedLenFeature((), tf.string, default_value=''),
       fields.TfExampleFields.keypoints: \
         tf.VarLenFeature(tf.float32),
+      fields.TfExampleFields.lexicon: \
+        tf.FixedLenFeature((), tf.string, default_value=''),
     }
     self.items_to_handlers = {
       fields.InputDataFields.image: \
@@ -39,7 +41,12 @@ class TfExampleDecoder(object):
       fields.InputDataFields.groundtruth_text: \
         slim_example_decoder.Tensor(fields.TfExampleFields.transcript),
       fields.InputDataFields.groundtruth_keypoints: \
-        slim_example_decoder.Tensor(fields.TfExampleFields.keypoints)
+        slim_example_decoder.Tensor(fields.TfExampleFields.keypoints),
+      fields.InputDataFields.lexicon: \
+        slim_example_decoder.ItemHandlerCallback(
+          [fields.TfExampleFields.lexicon],
+          self._split_lexicon
+        )
     }
 
   def Decode(self, tf_example_string_tensor):
@@ -64,3 +71,9 @@ class TfExampleDecoder(object):
     tensor_dict[fields.InputDataFields.groundtruth_keypoints] = normalized_keypoints
 
     return tensor_dict
+
+  def _split_lexicon(self, keys_to_tensors):
+    joined_lexicon = keys_to_tensors[fields.TfExampleFields.lexicon]
+    lexicon_sparse = tf.string_split([joined_lexicon], delimiter='\t')
+    lexicon = tf.sparse_tensor_to_dense(lexicon_sparse, default_value='')[0]
+    return lexicon

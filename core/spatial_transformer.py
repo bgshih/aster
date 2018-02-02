@@ -62,8 +62,6 @@ class SpatialTransformer(object):
     conv_output = tf.reshape(conv_output, [batch_size, -1])
     with arg_scope(self._fc_hyperparams):
       fc1 = fully_connected(conv_output, 512)
-      # fc2 = fully_connected(fc1, 2 * k, activation_fn=None, normalizer_fn=None)
-      # ctrl_pts = tf.sigmoid(fc2)
       fc2_weights_initializer = tf.zeros_initializer()
       fc2_biases_initializer = tf.constant_initializer(self._init_bias)
       fc2 = fully_connected(0.1 * fc1, 2 * k,

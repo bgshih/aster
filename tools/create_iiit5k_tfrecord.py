@@ -16,7 +16,7 @@ flags.DEFINE_string('data_dir', '', 'Root directory to raw SynthText dataset.')
 FLAGS = flags.FLAGS
 
 
-def create_iiit5k_subset(output_path, train_subset=True):
+def create_iiit5k_subset(output_path, train_subset=True, lexicon_index=None):
   writer = tf.python_io.TFRecordWriter(output_path)
 
   mat_file_name = 'traindata.mat' if train_subset else 'testdata.mat'
@@ -28,12 +28,8 @@ def create_iiit5k_subset(output_path, train_subset=True):
   for entry in tqdm(entries):
     image_rel_path = str(entry[0][0])
     groundtruth_text = str(entry[1][0])
-    lexicon = [str(t[0]) for t in entry[2].flatten()]
-
-    if train_subset:
-      lexicon_2 = []
-    else:
-      lexicon_2 = [str(t[0]) for t in entry[3].flatten()]
+    if not train_subset:
+      lexicon = [str(t[0]) for t in entry[lexicon_index].flatten()]
 
     image_path = os.path.join(FLAGS.data_dir, image_rel_path)
     with open(image_path, 'rb') as f:
@@ -53,9 +49,7 @@ def create_iiit5k_subset(output_path, train_subset=True):
       fields.TfExampleFields.transcript: \
         dataset_util.bytes_feature(groundtruth_text.encode('utf-8')),
       fields.TfExampleFields.lexicon: \
-        dataset_util.bytes_feature(('\t'.join(lexicon)).encode('utf-8')),
-      fields.TfExampleFields.lexicon_2: \
-        dataset_util.bytes_feature(('\t'.join(lexicon_2)).encode('utf-8'))
+        dataset_util.bytes_feature(('\t'.join(lexicon)).encode('utf-8'))
     }))
     writer.write(example.SerializeToString())
 
@@ -63,5 +57,6 @@ def create_iiit5k_subset(output_path, train_subset=True):
 
 
 if __name__ == '__main__':
-  create_iiit5k_subset('iiit5k_train.tfrecord', train_subset=True)
-  # create_iiit5k_subset('iiit5k_test.tfrecord', train_subset=False)
+  # create_iiit5k_subset('data/iiit5k_train.tfrecord', train_subset=True)
+  create_iiit5k_subset('data/iiit5k_test_50.tfrecord', train_subset=False, lexicon_index=2)
+  # create_iiit5k_subset('data/iiit5k_test_1k.tfrecord', train_subset=False, lexicon_index=3)

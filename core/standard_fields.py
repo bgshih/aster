@@ -6,6 +6,7 @@ class InputDataFields(object):
   filename = 'filename'
   groundtruth_text = 'groundtruth_text'
   groundtruth_keypoints = 'groundtruth_keypoints'
+  lexicon = 'lexicon'
 
 
 class TfExampleFields(object):
@@ -19,5 +20,4 @@ class TfExampleFields(object):
   source_id = 'image/source_id'
   transcript = 'image/transcript'
   lexicon = 'image/lexicon'
-  lexicon_2 = 'image/lexicon_2'
   keypoints = 'image/keypoints'

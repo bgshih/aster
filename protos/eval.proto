@@ -48,6 +48,9 @@ message EvalConfig {
   // Whether to evaluate instance masks.
   optional bool eval_instance_masks = 12 [default=false];
 
+  // Whether to evaluate with lexicon
+  optional bool eval_with_lexicon = 15 [default=false];
+
   // data preprocessing steps
   repeated PreprocessingStep data_preprocessing_steps = 13;
 }

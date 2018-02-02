@@ -1,6 +1,8 @@
 import os
 import logging
 import tensorflow as tf
+import numpy as np
+import editdistance
 
 from rare.core import preprocessor
 from rare.core import prefetcher
@@ -17,7 +19,8 @@ EVAL_METRICS_FN_DICT = {
 def _extract_prediction_tensors(model,
                                 create_input_dict_fn,
                                 data_preprocessing_steps,
-                                ignore_groundtruth=False):
+                                ignore_groundtruth=False,
+                                evaluate_with_lexicon=False):
   # input queue
   input_dict = create_input_dict_fn()
   prefetch_queue = prefetcher.prefetch(input_dict, capacity=500)
@@ -35,13 +38,32 @@ def _extract_prediction_tensors(model,
   predictions_dict = model.predict(tf.expand_dims(preprocessed_image, 0))
   recognitions = model.postprocess(predictions_dict)
 
+  def _lexicon_search(lexicon, word):
+    edit_distances = []
+    for lex_word in lexicon:
+      edit_distances.append(editdistance.eval(lex_word.lower(), word.lower()))
+    edit_distances = np.asarray(edit_distances, dtype=np.int)
+    argmin = np.argmin(edit_distances)
+    return lexicon[argmin]
+
+  if evaluate_with_lexicon:
+    lexicon = input_dict[fields.InputDataFields.lexicon]
+    recognition_text = tf.py_func(
+      _lexicon_search,
+      [lexicon, recognitions['text'][0]],
+      tf.string,
+      stateful=False,
+    )
+  else:
+    recognition_text = recognitions['text'][0]
+
   tensor_dict = {
     'original_image': original_image,
     'original_image_shape': original_image_shape,
     'preprocessed_image_shape': preprocessed_image_shape,
     'filename': preprocessed_input_dict[fields.InputDataFields.filename],
     'groundtruth_text': input_dict[fields.InputDataFields.groundtruth_text],
-    'recognition_text': recognitions['text'][0],
+    'recognition_text': recognition_text,
   }
   if 'control_points' in predictions_dict:
     tensor_dict.update({
@@ -64,7 +86,8 @@ def evaluate(create_input_dict_fn, create_model_fn, eval_config,
       model=model,
       create_input_dict_fn=create_input_dict_fn,
       data_preprocessing_steps=data_preprocessing_steps,
-      ignore_groundtruth=eval_config.ignore_groundtruth)
+      ignore_groundtruth=eval_config.ignore_groundtruth,
+      evaluate_with_lexicon=eval_config.eval_with_lexicon)
 
   summary_writer = tf.summary.FileWriter(eval_dir)
 
