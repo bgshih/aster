@@ -344,7 +344,7 @@ def subtract_channel_mean(image, means=None):
     return image - [[means]]
 
 
-def rgb_to_gray(image):
+def rgb_to_gray(image, three_channels=False):
   """Converts a 3 channel RGB image to a 1 channel grayscale image.
 
   Args:
@@ -354,7 +354,10 @@ def rgb_to_gray(image):
   Returns:
     image: A single channel grayscale image -> [image, height, 1].
   """
-  return tf.image.rgb_to_grayscale(image)
+  gray_image = tf.image.rgb_to_grayscale(image)
+  if three_channels:
+    gray_image = tf.tile(gray_image, [1,1,3])
+  return gray_image
 
 
 def string_filtering(text, lower_case=False, include_charset=""):
