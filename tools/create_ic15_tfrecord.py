@@ -14,10 +14,8 @@ from rare.core import standard_fields as fields
 
 flags = tf.app.flags
 flags.DEFINE_string('data_dir', '/home/mkyang/dataset/recognition/icdar2015/', 'Root directory to raw SynthText dataset.')
-flags.DEFINE_string('file_name', 'test_groundtruth_all.txt', 'xxx.')
-flags.DEFINE_float('crop_margin', 0.15, 'Margin in percentage of word height')
-flags.DEFINE_bool('filter', False, 'filter the non-alphanumeric.')
-flags.DEFINE_string('output_path', 'rare/data/ic15_test_all.tfrecord', 'xxx.')
+flags.DEFINE_bool('exclude_difficult', False, 'Excluding non-alphanumeric examples.')
+flags.DEFINE_string('output_path', 'data/ic15_test_all.tfrecord', 'Output tfrecord path.')
 FLAGS = flags.FLAGS
 
 def _is_difficult(word):
@@ -36,7 +34,7 @@ def char_check(word):
 def create_ic15(output_path):
   writer = tf.python_io.TFRecordWriter(output_path)
 
-  groundtruth_file_path = os.path.join(FLAGS.data_dir, FLAGS.file_name)
+  groundtruth_file_path = os.path.join(FLAGS.data_dir, 'test_groundtruth_all.txt')
   
   count = 0
   with open(groundtruth_file_path, 'r') as f:
@@ -44,7 +42,7 @@ def create_ic15(output_path):
     img_gts = [line.strip() for line in lines]
     for img_gt in img_gts:
       img_rel_path, gt = img_gt.split(' ', 1)
-      if FLAGS.filter and not char_check(gt):
+      if FLAGS.exclude_difficult and not char_check(gt):
         continue
       img_path = os.path.join(FLAGS.data_dir, img_rel_path)
       img = Image.open(img_path)
