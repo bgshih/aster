@@ -1,4 +1,4 @@
-# ASTER: Attentional Scene TExt Recognizer with Flexible Rectification 
+# ASTER: *A*ttentional *S*cene *TE*xt *R*ecognizer with Flexible Rectification 
 
 ASTER is an accurate scene text recognizer with flexible rectification mechanism.
 
