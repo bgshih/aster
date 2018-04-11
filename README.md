@@ -2,6 +2,8 @@
 
 ASTER is an accurate scene text recognizer with flexible rectification mechanism.
 
+![ASTER Overview](overview.png)
+
 The implementation of ASTER reuses code from [Tensorflow Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection).
 
 ## Prerequisites
