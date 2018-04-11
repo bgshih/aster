@@ -2,6 +2,8 @@
 
 ASTER is an accurate scene text recognizer with flexible rectification mechanism.
 
+The implementation of ASTER reuses code from [Tensorflow Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection).
+
 ## Prerequisites
 
 Install [Protocol Buffers](https://github.com/google/protobuf) (version>=2.6)
@@ -29,7 +31,7 @@ python3 aster/train.py \
 
 Change the configuration in `experiments/aster/trainval.prototxt` to configure your own training process.
 
-While training, you can run a separate program that repeatedely evaluates the checkpoints produced by the training every few minutes.
+While training, you can run a separate program that repeatedly evaluates the checkpoints produced by the training every few minutes.
 
 ```
 python3 aster/eval.py \
