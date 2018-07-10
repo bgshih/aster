@@ -1,8 +1,8 @@
-from rare.core import bidirectional_rnn
-from rare.protos import hyperparams_pb2
-from rare.protos import bidirectional_rnn_pb2
-from rare.builders import hyperparams_builder
-from rare.builders import rnn_cell_builder
+from aster.core import bidirectional_rnn
+from aster.protos import hyperparams_pb2
+from aster.protos import bidirectional_rnn_pb2
+from aster.builders import hyperparams_builder
+from aster.builders import rnn_cell_builder
 
 
 def build(config, is_training):

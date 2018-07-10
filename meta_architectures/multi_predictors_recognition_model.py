@@ -4,10 +4,10 @@ import functools
 import tensorflow as tf
 from tensorflow.contrib import seq2seq
 
-from rare.core import model
-from rare.core import standard_fields as fields
-from rare.c_ops import ops
-from rare.utils import shape_utils
+from aster.core import model
+from aster.core import standard_fields as fields
+from aster.c_ops import ops
+from aster.utils import shape_utils
 
 
 class MultiPredictorsRecognitionModel(model.Model):

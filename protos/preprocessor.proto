@@ -1,7 +1,7 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/label_map.proto";
+import "aster/protos/label_map.proto";
 
 
 message PreprocessingStep {

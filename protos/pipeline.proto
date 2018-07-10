@@ -1,10 +1,10 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/train.proto";
-import "rare/protos/eval.proto";
-import "rare/protos/input_reader.proto";
-import "rare/protos/model.proto";
+import "aster/protos/train.proto";
+import "aster/protos/eval.proto";
+import "aster/protos/input_reader.proto";
+import "aster/protos/model.proto";
 
 // Convenience message for configuring a training and eval pipeline. Allows all
 // of the pipeline parameters to be configured from one file.

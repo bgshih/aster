@@ -1,11 +1,11 @@
 import tensorflow as tf
 from google.protobuf import text_format
 
-from rare.builders import convnet_builder
-from rare.protos import convnet_pb2
-from rare.convnets import crnn_net
-from rare.convnets import resnet
-from rare.convnets import stn_convnet
+from aster.builders import convnet_builder
+from aster.protos import convnet_pb2
+from aster.convnets import crnn_net
+from aster.convnets import resnet
+from aster.convnets import stn_convnet
 
 class FeatureExtractorTest(tf.test.TestCase):
 

@@ -1,10 +1,10 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/rnn_cell.proto";
-import "rare/protos/hyperparams.proto";
-import "rare/protos/label_map.proto";
-import "rare/protos/loss.proto";
+import "aster/protos/rnn_cell.proto";
+import "aster/protos/hyperparams.proto";
+import "aster/protos/label_map.proto";
+import "aster/protos/loss.proto";
 
 
 message Predictor {

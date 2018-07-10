@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 from google.protobuf import text_format
-from rare.builders import bidirectional_rnn_builder
-from rare.protos import bidirectional_rnn_pb2
+from aster.builders import bidirectional_rnn_builder
+from aster.protos import bidirectional_rnn_pb2
 
 
 class BidirectionalRnnBuilderTest(tf.test.TestCase):

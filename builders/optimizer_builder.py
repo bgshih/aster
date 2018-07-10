@@ -1,7 +1,7 @@
 """Functions to build DetectionModel training optimizers."""
 
 import tensorflow as tf
-from rare.utils import learning_schedules
+from aster.utils import learning_schedules
 
 
 def build(optimizer_config, global_summaries):

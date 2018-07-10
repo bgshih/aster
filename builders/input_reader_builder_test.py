@@ -6,9 +6,9 @@ from google.protobuf import text_format
 
 from tensorflow.core.example import example_pb2
 from tensorflow.core.example import feature_pb2
-from rare.core import standard_fields as fields
-from rare.protos import input_reader_pb2
-from rare.builders import input_reader_builder
+from aster.core import standard_fields as fields
+from aster.protos import input_reader_pb2
+from aster.builders import input_reader_builder
 
 
 class InputReaderTest(tf.test.TestCase):

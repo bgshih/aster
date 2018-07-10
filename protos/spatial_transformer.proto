@@ -1,8 +1,8 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/convnet.proto";
-import "rare/protos/hyperparams.proto";
+import "aster/protos/convnet.proto";
+import "aster/protos/hyperparams.proto";
 
 
 message SpatialTransformer {

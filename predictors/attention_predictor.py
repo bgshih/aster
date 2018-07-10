@@ -7,11 +7,11 @@ from tensorflow.contrib import seq2seq
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.util import nest
 
-from rare.core import predictor
-from rare.core import sync_attention_wrapper
-from rare.core import loss
-from rare.utils import shape_utils
-from rare.c_ops import ops
+from aster.core import predictor
+from aster.core import sync_attention_wrapper
+from aster.core import loss
+from aster.utils import shape_utils
+from aster.c_ops import ops
 
 
 class AttentionPredictor(predictor.Predictor):

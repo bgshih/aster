@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rare.utils import visualization_utils
+from aster.utils import visualization_utils
 
 class VisualizationUtilsTest(tf.test.TestCase):
 

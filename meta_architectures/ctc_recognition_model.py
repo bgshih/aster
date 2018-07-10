@@ -4,8 +4,8 @@ import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.layers import fully_connected
 
-from rare.core import model
-from rare.utils import shape_utils
+from aster.core import model
+from aster.utils import shape_utils
 
 
 class CtcRecognitionModel(model.Model):

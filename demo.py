@@ -5,8 +5,8 @@ from PIL import Image
 from google.protobuf import text_format
 import numpy as np
 
-from rare.protos import pipeline_pb2
-from rare.builders import model_builder
+from aster.protos import pipeline_pb2
+from aster.builders import model_builder
 
 # supress TF logging duplicates
 logging.getLogger('tensorflow').propagate = False
@@ -14,9 +14,9 @@ tf.logging.set_verbosity(tf.logging.INFO)
 logging.basicConfig(level=logging.INFO)
 
 flags = tf.app.flags
-flags.DEFINE_string('exp_dir', 'rare/experiments/demo/',
+flags.DEFINE_string('exp_dir', 'aster/experiments/demo/',
                     'Directory containing config, training log and evaluations')
-flags.DEFINE_string('input_image', 'rare/data/demo.jpg', 'Demo image')
+flags.DEFINE_string('input_image', 'aster/data/demo.jpg', 'Demo image')
 FLAGS = flags.FLAGS
 
 

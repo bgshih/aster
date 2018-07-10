@@ -1,7 +1,7 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/hyperparams.proto";
+import "aster/protos/hyperparams.proto";
 
 message Convnet {
   oneof convnet_oneof {

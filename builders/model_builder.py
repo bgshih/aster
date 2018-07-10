@@ -1,11 +1,11 @@
 import tensorflow as tf
 
-from rare.builders import spatial_transformer_builder
-from rare.builders import feature_extractor_builder
-from rare.builders import predictor_builder
-from rare.builders import loss_builder
-from rare.meta_architectures import multi_predictors_recognition_model
-from rare.protos import model_pb2
+from aster.builders import spatial_transformer_builder
+from aster.builders import feature_extractor_builder
+from aster.builders import predictor_builder
+from aster.builders import loss_builder
+from aster.meta_architectures import multi_predictors_recognition_model
+from aster.protos import model_pb2
 
 
 def build(config, is_training):

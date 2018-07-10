@@ -4,8 +4,8 @@ import string
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 
-from rare.core import standard_fields as fields
-from rare.c_ops import ops
+from aster.core import standard_fields as fields
+from aster.c_ops import ops
 
 
 def _apply_with_random_selector(x, func, num_cases):

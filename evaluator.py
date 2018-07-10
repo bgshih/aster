@@ -4,11 +4,11 @@ import tensorflow as tf
 import numpy as np
 import editdistance
 
-from rare.core import preprocessor
-from rare.core import prefetcher
-from rare.core import standard_fields as fields
-from rare.builders import preprocessor_builder
-from rare import eval_util
+from aster.core import preprocessor
+from aster.core import prefetcher
+from aster.core import standard_fields as fields
+from aster.builders import preprocessor_builder
+from aster import eval_util
 
 
 EVAL_METRICS_FN_DICT = {

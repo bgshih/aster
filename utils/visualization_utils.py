@@ -30,7 +30,7 @@ import PIL.ImageFont as ImageFont
 import six
 import tensorflow as tf
 
-from rare.utils import shape_utils
+from aster.utils import shape_utils
 
 _TITLE_LEFT_MARGIN = 10
 _TITLE_TOP_MARGIN = 10

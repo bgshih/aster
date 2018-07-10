@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from rare.core import spatial_transformer
-from rare.protos import spatial_transformer_pb2
-from rare.builders import hyperparams_builder
-from rare.builders import convnet_builder
+from aster.core import spatial_transformer
+from aster.protos import spatial_transformer_pb2
+from aster.builders import hyperparams_builder
+from aster.builders import convnet_builder
 
 
 def build(config, is_training):

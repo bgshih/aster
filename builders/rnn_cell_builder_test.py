@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 from google.protobuf import text_format
-from rare.protos import rnn_cell_pb2
-from rare.builders import rnn_cell_builder
+from aster.protos import rnn_cell_pb2
+from aster.builders import rnn_cell_builder
 
 
 class RnnCellTest(tf.test.TestCase):

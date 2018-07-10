@@ -11,8 +11,8 @@ import numpy as np
 import scipy.io as sio
 from tqdm import tqdm
 
-from rare.utils import dataset_util
-from rare.core import standard_fields as fields
+from aster.utils import dataset_util
+from aster.core import standard_fields as fields
 
 margin_ratio = 0.1
 num_keypoints = 128
@@ -260,7 +260,7 @@ def main(_):
             bottom_pt = tuple(center + [0, size])
             draw.line([top_pt, bottom_pt], width=1, fill='#ffffff')
             draw.line([left_pt, right_pt], width=1, fill='#ffffff')
-          save_fname = 'rare/vis/{}_{}.jpg'.format(count, words[i])
+          save_fname = 'aster/vis/{}_{}.jpg'.format(count, words[i])
           draw = ImageDraw.Draw(word_crop_im)
           for pts in curve_points:
             _draw_cross(draw, pts)

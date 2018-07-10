@@ -1,8 +1,8 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/convnet.proto";
-import "rare/protos/bidirectional_rnn.proto";
+import "aster/protos/convnet.proto";
+import "aster/protos/bidirectional_rnn.proto";
 
 message FeatureExtractor {
   optional Convnet convnet = 1;

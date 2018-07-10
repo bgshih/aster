@@ -21,8 +21,8 @@ from tensorflow.contrib.framework import arg_scope
 
 from google.protobuf import text_format
 
-from rare.builders import hyperparams_builder
-from rare.protos import hyperparams_pb2
+from aster.builders import hyperparams_builder
+from aster.protos import hyperparams_pb2
 
 
 class HyperparamsBuilderTest(tf.test.TestCase):

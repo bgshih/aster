@@ -7,8 +7,8 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 
-from rare.utils import dataset_util
-from rare.core import standard_fields as fields
+from aster.utils import dataset_util
+from aster.core import standard_fields as fields
 
 
 flags = tf.app.flags

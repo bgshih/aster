@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-from rare.core import loss
-from rare.protos import loss_pb2
+from aster.core import loss
+from aster.protos import loss_pb2
 
 
 def build(config):

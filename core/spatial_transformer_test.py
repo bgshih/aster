@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 
-from rare.core import spatial_transformer
+from aster.core import spatial_transformer
 
 
 class SpatialTransformerTest(tf.test.TestCase):
@@ -29,7 +29,7 @@ class SpatialTransformerTest(tf.test.TestCase):
         [0.1, 0.9], [0.5, 0.9], [0.9, 0.9],
       ]
     ], dtype=np.float32)
-    test_im = Image.open('rare/data/test_image.jpg').resize((128, 128))
+    test_im = Image.open('aster/data/test_image.jpg').resize((128, 128))
     test_image_array = np.array(test_im)
     test_image_array = np.array([test_image_array, test_image_array, test_image_array])
     test_images = tf.cast(tf.constant(test_image_array), tf.float32)

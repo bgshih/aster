@@ -1,13 +1,13 @@
 import tensorflow as tf
 from tensorflow.contrib import rnn
 
-from rare.protos import predictor_pb2
-from rare.builders import rnn_cell_builder
-from rare.builders import label_map_builder
-from rare.builders import loss_builder
-from rare.builders import hyperparams_builder
-from rare.predictors import attention_predictor
-# from rare.predictors import attention_predictor_with_lm
+from aster.protos import predictor_pb2
+from aster.builders import rnn_cell_builder
+from aster.builders import label_map_builder
+from aster.builders import loss_builder
+from aster.builders import hyperparams_builder
+from aster.predictors import attention_predictor
+# from aster.predictors import attention_predictor_with_lm
 
 
 def build(config, is_training):

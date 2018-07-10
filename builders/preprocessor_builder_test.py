@@ -2,10 +2,10 @@ import tensorflow as tf
 
 from google.protobuf import text_format
 
-from rare.core import preprocessor
-from rare.core import standard_fields as fields
-from rare.protos import preprocessor_pb2
-from rare.builders import preprocessor_builder
+from aster.core import preprocessor
+from aster.core import standard_fields as fields
+from aster.protos import preprocessor_pb2
+from aster.builders import preprocessor_builder
 
 class PreprocessorBuilderTest(tf.test.TestCase):
 

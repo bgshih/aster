@@ -3,7 +3,7 @@ import logging
 
 import tensorflow as tf
 
-from rare.utils import shape_utils
+from aster.utils import shape_utils
 
 
 class LabelMap(object):

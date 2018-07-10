@@ -2,9 +2,9 @@ import tensorflow as tf
 import numpy as np
 
 from google.protobuf import text_format
-from rare.core import loss
-from rare.builders import loss_builder
-from rare.protos import loss_pb2
+from aster.core import loss
+from aster.builders import loss_builder
+from aster.protos import loss_pb2
 
 
 class LossTest(tf.test.TestCase):

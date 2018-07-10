@@ -16,7 +16,7 @@
 """Builder function to construct tf.contrib.layers arg_scope for convolution, fc ops."""
 import tensorflow as tf
 
-from rare.protos import hyperparams_pb2
+from aster.protos import hyperparams_pb2
 
 from tensorflow.contrib import layers
 from tensorflow.contrib.framework import arg_scope

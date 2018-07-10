@@ -3,7 +3,7 @@ import collections
 
 import tensorflow as tf
 
-from rare.core import prefetcher
+from aster.core import prefetcher
 
 rt_shape_str = '_runtime_shapes'
 

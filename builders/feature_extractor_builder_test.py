@@ -1,8 +1,8 @@
 import tensorflow as tf
 from google.protobuf import text_format
 
-from rare.protos import feature_extractor_pb2
-from rare.builders import feature_extractor_builder
+from aster.protos import feature_extractor_pb2
+from aster.builders import feature_extractor_builder
 
 
 class FeatureExtractorBuilderTest(tf.test.TestCase):

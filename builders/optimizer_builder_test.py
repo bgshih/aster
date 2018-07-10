@@ -19,8 +19,8 @@ import tensorflow as tf
 
 from google.protobuf import text_format
 
-from rare.builders import optimizer_builder
-from rare.protos import optimizer_pb2
+from aster.builders import optimizer_builder
+from aster.protos import optimizer_pb2
 
 
 class LearningRateBuilderTest(tf.test.TestCase):

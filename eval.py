@@ -4,12 +4,12 @@ import logging
 import tensorflow as tf
 
 from google.protobuf import text_format
-from rare import evaluator
-from rare.protos import eval_pb2
-from rare.protos import pipeline_pb2
-from rare.protos import input_reader_pb2
-from rare.builders import model_builder
-from rare.builders import input_reader_builder
+from aster import evaluator
+from aster.protos import eval_pb2
+from aster.protos import pipeline_pb2
+from aster.protos import input_reader_pb2
+from aster.builders import model_builder
+from aster.builders import input_reader_builder
 
 
 logging.getLogger('tensorflow').propagate = False # avoid logging duplicates

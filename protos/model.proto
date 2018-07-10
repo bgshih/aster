@@ -1,10 +1,10 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/feature_extractor.proto";
-import "rare/protos/predictor.proto";
-import "rare/protos/spatial_transformer.proto";
-import "rare/protos/loss.proto";
+import "aster/protos/feature_extractor.proto";
+import "aster/protos/predictor.proto";
+import "aster/protos/spatial_transformer.proto";
+import "aster/protos/loss.proto";
 
 
 message Model {

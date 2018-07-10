@@ -1,5 +1,5 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
 message LabelMap {
   optional CharacterSet character_set = 1;

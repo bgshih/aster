@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from rare.c_ops import ops
+from aster.c_ops import ops
 
 class OpsTest(tf.test.TestCase):
 

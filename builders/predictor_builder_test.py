@@ -1,8 +1,8 @@
 import tensorflow as tf
 from google.protobuf import text_format
 
-from rare.builders import predictor_builder
-from rare.protos import predictor_pb2
+from aster.builders import predictor_builder
+from aster.protos import predictor_pb2
 
 
 class PredictorBuilderTest(tf.test.TestCase):

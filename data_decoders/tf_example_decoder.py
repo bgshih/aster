@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from rare.core import standard_fields as fields
+from aster.core import standard_fields as fields
 
 slim_example_decoder = tf.contrib.slim.tfexample_decoder
 

@@ -2,8 +2,8 @@ import functools
 
 import tensorflow as tf
 
-from rare.protos import rnn_cell_pb2
-from rare.builders import hyperparams_builder
+from aster.protos import rnn_cell_pb2
+from aster.builders import hyperparams_builder
 
 
 def build(rnn_cell_config):

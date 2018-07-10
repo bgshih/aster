@@ -2,14 +2,14 @@ import functools
 
 import tensorflow as tf
 
-from rare.core import preprocessor
-from rare.core import batcher
-from rare.core import standard_fields as fields
-from rare.builders import preprocessor_builder
-from rare.builders import optimizer_builder
-from rare.utils import variables_helper
-from rare.utils import model_deploy
-from rare.utils import profile_session_run_hooks
+from aster.core import preprocessor
+from aster.core import batcher
+from aster.core import standard_fields as fields
+from aster.builders import preprocessor_builder
+from aster.builders import optimizer_builder
+from aster.utils import variables_helper
+from aster.utils import model_deploy
+from aster.utils import profile_session_run_hooks
 
 
 def _create_input_queue(batch_size_per_clone, create_tensor_dict_fn,

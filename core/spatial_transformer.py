@@ -3,7 +3,7 @@ import numpy as np
 from tensorflow.contrib.layers import avg_pool2d, fully_connected
 from tensorflow.contrib.framework import arg_scope
 
-from rare.utils import shape_utils
+from aster.utils import shape_utils
 
 
 eps = 1e-6

@@ -1,5 +1,5 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
 // Messages for configuring the optimizing strategy for training object
 // detection models.

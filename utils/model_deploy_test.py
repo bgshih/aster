@@ -21,7 +21,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-from rare.utils import model_deploy
+from aster.utils import model_deploy
 
 from tensorflow.contrib import framework
 from tensorflow.contrib import layers

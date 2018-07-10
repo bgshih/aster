@@ -2,11 +2,11 @@ import functools
 
 import tensorflow as tf
 
-from rare.core import feature_extractor
-from rare.protos import feature_extractor_pb2
-from rare.builders import convnet_builder
-from rare.builders import bidirectional_rnn_builder
-from rare.builders import hyperparams_builder
+from aster.core import feature_extractor
+from aster.protos import feature_extractor_pb2
+from aster.builders import convnet_builder
+from aster.builders import bidirectional_rnn_builder
+from aster.builders import hyperparams_builder
 
 
 def build(config, is_training):

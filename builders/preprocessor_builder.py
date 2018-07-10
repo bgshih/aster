@@ -1,8 +1,8 @@
 import tensorflow as tf
 
-from rare.core import preprocessor
-from rare.protos import preprocessor_pb2
-from rare.builders import label_map_builder
+from aster.core import preprocessor
+from aster.protos import preprocessor_pb2
+from aster.builders import label_map_builder
 
 
 def _get_step_config_from_proto(preprocessor_step_config, step_name):

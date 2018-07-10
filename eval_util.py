@@ -26,8 +26,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from rare.utils import recognition_evaluation
-from rare.utils import visualization_utils as vis_utils
+from aster.utils import recognition_evaluation
+from aster.utils import visualization_utils as vis_utils
 
 
 def write_metrics(metrics, global_step, summary_dir):

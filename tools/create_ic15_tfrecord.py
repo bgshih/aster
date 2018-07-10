@@ -9,8 +9,8 @@ import glob
 from PIL import Image
 import tensorflow as tf
 
-from rare.utils import dataset_util
-from rare.core import standard_fields as fields
+from aster.utils import dataset_util
+from aster.core import standard_fields as fields
 
 flags = tf.app.flags
 flags.DEFINE_string('data_dir', '/home/mkyang/dataset/recognition/icdar2015/', 'Root directory to raw SynthText dataset.')

@@ -1,8 +1,8 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/optimizer.proto";
-import "rare/protos/preprocessor.proto";
+import "aster/protos/optimizer.proto";
+import "aster/protos/preprocessor.proto";
 
 // Message for configuring DetectionModel training jobs (train.py).
 message TrainConfig {

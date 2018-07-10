@@ -1,8 +1,8 @@
 import tensorflow as tf
 from google.protobuf import text_format
 
-from rare.builders import label_map_builder
-from rare.protos import label_map_pb2
+from aster.builders import label_map_builder
+from aster.protos import label_map_pb2
 
 
 class LabelMapTest(tf.test.TestCase):

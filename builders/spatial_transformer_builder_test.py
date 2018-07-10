@@ -3,8 +3,8 @@ import tensorflow as tf
 
 from google.protobuf import text_format
 
-from rare.protos import spatial_transformer_pb2
-from rare.builders import spatial_transformer_builder
+from aster.protos import spatial_transformer_pb2
+from aster.builders import spatial_transformer_builder
 
 
 class SpatialTransformerBuilderTest(tf.test.TestCase):

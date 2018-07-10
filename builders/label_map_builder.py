@@ -3,8 +3,8 @@ import string
 
 import tensorflow as tf
 
-from rare.core import label_map
-from rare.protos import label_map_pb2
+from aster.core import label_map
+from aster.protos import label_map_pb2
 
 
 def build(config):

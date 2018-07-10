@@ -11,8 +11,8 @@ import os
 
 import tensorflow as tf
 
-from rare.data_decoders import tf_example_decoder
-from rare.protos import input_reader_pb2
+from aster.data_decoders import tf_example_decoder
+from aster.protos import input_reader_pb2
 
 parallel_reader = tf.contrib.slim.parallel_reader
 

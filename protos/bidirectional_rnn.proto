@@ -1,8 +1,8 @@
 syntax = "proto2";
-package rare.protos;
+package aster.protos;
 
-import "rare/protos/rnn_cell.proto";
-import "rare/protos/hyperparams.proto";
+import "aster/protos/rnn_cell.proto";
+import "aster/protos/hyperparams.proto";
 
 message BidirectionalRnn {
   optional bool static = 1 [default = true];

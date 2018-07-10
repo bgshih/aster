@@ -49,13 +49,13 @@ import logging
 import tensorflow as tf
 from google.protobuf import text_format
 
-from rare.protos import model_pb2
-from rare.protos import pipeline_pb2
-from rare.protos import train_pb2
-from rare.protos import input_reader_pb2
-from rare.builders import model_builder
-from rare.builders import input_reader_builder
-from rare import trainer
+from aster.protos import model_pb2
+from aster.protos import pipeline_pb2
+from aster.protos import train_pb2
+from aster.protos import input_reader_pb2
+from aster.builders import model_builder
+from aster.builders import input_reader_builder
+from aster import trainer
 
 logging.getLogger('tensorflow').propagate = False # avoid logging duplicates
 tf.logging.set_verbosity(tf.logging.INFO)
