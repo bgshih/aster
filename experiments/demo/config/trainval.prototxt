@@ -1,0 +1,353 @@
+model {
+  multi_predictors_recognition_model {
+
+    spatial_transformer {
+      convnet {
+        stn_convnet {
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+        }
+      }
+      fc_hyperparams {
+        op: FC
+        regularizer { l2_regularizer { weight: 0 } }
+        initializer { variance_scaling_initializer { } }
+        batch_norm { decay: 0.99 }
+      }
+      localization_h: 32
+      localization_w: 64
+      output_h: 32
+      output_w: 100
+      margin_x: 0
+      margin_y: 0
+      num_control_points: 20
+      init_bias_pattern: "sine"
+      summarize_activations: true
+    }
+    
+    feature_extractor {
+      convnet {
+        resnet {
+          net_type: SINGLE_BRANCH
+          net_depth: RESNET_50
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+          summarize_activations: false
+        }
+      }
+      bidirectional_rnn {
+        static: true
+        fw_bw_rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      bidirectional_rnn {
+        static: true
+        fw_bw_rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      summarize_activations: false
+    }
+
+    predictor {
+      name: "Forward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 30
+        multi_attention: false
+        beam_width: 5
+        reverse: false
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+
+    predictor {
+      name: "Backward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 30
+        multi_attention: false
+        beam_width: 5
+        reverse: true
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+  }
+}
+
+train_config {
+  batch_size: [32, 32]
+  data_augmentation_options {
+    resize_image_random_method {
+      target_height: 64
+      target_width: 256
+    }
+  }
+  data_augmentation_options {
+    string_filtering {
+      lower_case: false
+      include_charset {
+        built_in_set: ALLCASES_SYMBOLS
+      }
+    }
+  }
+  keep_checkpoint_every_n_hours: 4
+  optimizer {
+    adadelta_optimizer {
+      learning_rate {
+        manual_step_learning_rate {
+          initial_learning_rate: 1
+          schedule {
+            step: 600000
+            learning_rate: 1e-1
+          }
+          schedule {
+            step: 800000
+            learning_rate: 1e-2
+          }
+          schedule {
+            step: 1000000
+            learning_rate: 1e-3
+          }
+        }
+      }
+    }
+  }
+  num_steps: 1200000
+  prefetch_queue_capacity: 100
+  save_summaries_steps: 1000
+}
+
+train_input_reader {
+  num_readers: 4
+  shuffle: true
+  tf_record_input_reader {
+    input_path: "data/synth90k_all.tfrecord"
+  }
+}
+
+train_input_reader {
+  num_readers: 4
+  shuffle: true
+  tf_record_input_reader {
+    input_path: "data/synthtext_crop_all.tfrecord"
+  }
+}
+
+# eval_config {
+#   metrics_set: "recognition_metrics"
+#   num_examples: 1015
+#   data_preprocessing_steps {
+#     resize_image {
+#       target_height: 64
+#       target_width: 256
+#     }
+#   }
+#   num_visualizations: 0
+#   visualization_export_dir: ""
+# }
+
+# eval_input_reader {
+#   num_epochs: 1
+#   num_readers: 1
+#   shuffle: false
+#   tf_record_input_reader {
+#     input_path: "data/ic13_test_.tfrecord"
+#   }
+# }
+
+eval_config {
+  metrics_set: "recognition_metrics"
+  num_examples: 860
+  data_preprocessing_steps {
+    resize_image {
+      target_height: 64
+      target_width: 256
+    }
+  }
+  # data_preprocessing_steps {
+  #   rgb_to_gray { three_channels: true }
+  # }
+  num_visualizations: 0
+  eval_with_lexicon: true
+  only_visualize_incorrect: true
+  visualization_export_dir: ""
+}
+
+eval_input_reader {
+  num_epochs: 1
+  num_readers: 1
+  shuffle: false
+  tf_record_input_reader {
+    input_path: "data/ic03_test_full.tfrecord"
+  }
+}
+
+# eval_config {
+#   metrics_set: "recognition_metrics"
+#   num_examples: 647
+#   data_preprocessing_steps {
+#     resize_image {
+#       target_height: 64
+#       target_width: 256
+#     }
+#   }
+#   # data_preprocessing_steps {
+#   #   rgb_to_gray { three_channels: true }
+#   # }
+#   num_visualizations: 0
+#   visualization_export_dir: ""
+#   eval_with_lexicon: true
+# }
+
+# eval_input_reader {
+#   num_epochs: 1
+#   num_readers: 1
+#   shuffle: false
+#   tf_record_input_reader {
+#     input_path: "data/svt_test.tfrecord"
+#   }
+# }
+
+# eval_config {
+#   metrics_set: "recognition_metrics"
+#   num_examples: 3000
+#   data_preprocessing_steps {
+#     resize_image {
+#       target_height: 64
+#       target_width: 256
+#     }
+#   }
+#   num_visualizations: 0
+#   only_visualize_incorrect: true
+#   visualization_export_dir: ""
+#   eval_with_lexicon: true
+# }
+
+# eval_input_reader {
+#   num_epochs: 1
+#   num_readers: 1
+#   shuffle: false
+#   tf_record_input_reader {
+#     input_path: "data/iiit5k_test_1k.tfrecord"
+#   }
+# }
+
+# eval_config {
+#   metrics_set: "recognition_metrics"
+#   num_examples: 645
+#   data_preprocessing_steps {
+#     resize_image {
+#       target_height: 64
+#       target_width: 256
+#     }
+#   }
+#   num_visualizations: 0
+#   visualization_export_dir: ""
+# }
+
+# eval_input_reader {
+#   num_epochs: 1
+#   num_readers: 1
+#   shuffle: false
+#   tf_record_input_reader {
+#     input_path: "data/svt_perspective_test.tfrecord"
+#   }
+# }
+
+# eval_config {
+#   metrics_set: "recognition_metrics"
+#   num_examples: 288
+#   data_preprocessing_steps {
+#     resize_image {
+#       target_height: 64
+#       target_width: 256
+#     }
+#   }
+#   num_visualizations: 0
+#   visualization_export_dir: ""
+# }
+
+# eval_input_reader {
+#   num_epochs: 1
+#   num_readers: 1
+#   shuffle: false
+#   tf_record_input_reader {
+#     input_path: "data/cute80_test.tfrecord"
+#   }
+# }
