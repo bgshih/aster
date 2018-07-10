@@ -33,6 +33,9 @@ python3 aster/demo.py
 ```
 
 ## Training and on-the-fly evaluation
+
+For data preparation, see the files under `aster/tools`.
+
 To run the example training, execute
 
 ```
