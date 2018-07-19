@@ -10,8 +10,7 @@ The implementation of ASTER reuses code from [Tensorflow Object Detection API](h
 
 ASTER is developed and tested with TensorFlow r1.4. Higher versions are likely to work as well.
 
-Besides, install [Protocol Buffers](https://github.com/google/protobuf) (version>=2.6). In Ubuntu 16.04
-
+ASTER requires [Protocol Buffers](https://github.com/google/protobuf) (version>=2.6). Besides, in Ubuntu 16.04:
 ```
 sudo apt install cmake libcupti-dev
 pip3 install --user tensorflow-gpu protobuf tqdm numpy editdistance
@@ -24,7 +23,7 @@ pip3 install --user tensorflow-gpu protobuf tqdm numpy editdistance
 
 ## Demo
 
-A demo program is located at `aster/demo.py`, accompanied with pretrained model files which can be found at our [release page](https://github.com/bgshih/aster/releases). Download `model-demo.zip` and extract it under `aster/experiments/demo/` before running the demo.
+A demo program is located at `aster/demo.py`, accompanied with pretrained model files available on our [release page](https://github.com/bgshih/aster/releases). Download `model-demo.zip` and extract it under `aster/experiments/demo/` before running the demo.
 
 To run the demo, simply execute:
 
@@ -32,25 +31,27 @@ To run the demo, simply execute:
 python3 aster/demo.py
 ```
 
+This will output the recognition result of the demo image and the rectified image.
+
 ## Training and on-the-fly evaluation
 
-For data preparation, see the files under `aster/tools`.
+Data preparation scripts for several popular scene text datasets are located under `aster/tools`. See their source code for usage.
 
 To run the example training, execute
 
 ```
 python3 aster/train.py \
-  --exp_dir experiments/aster \
+  --exp_dir experiments/demo \
   --num_clones 2
 ```
 
 Change the configuration in `experiments/aster/trainval.prototxt` to configure your own training process.
 
-During the training, run a separate program to repeatedly evaluates the produced checkpoints.
+During the training, you can run a separate program to repeatedly evaluates the produced checkpoints.
 
 ```
 python3 aster/eval.py \
-   --exp_dir experiments/aster
+   --exp_dir experiments/demo
 ```
 
 Evaluation configuration is also in `trainval.prototxt`.
