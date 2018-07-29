@@ -8,7 +8,7 @@ The implementation of ASTER reuses code from [Tensorflow Object Detection API](h
 
 ## Prerequisites
 
-ASTER is developed and tested with TensorFlow r1.4. Higher versions are likely to work as well.
+ASTER is developed and tested with *TensorFlow r1.4*.
 
 ASTER requires [Protocol Buffers](https://github.com/google/protobuf) (version>=2.6). Besides, in Ubuntu 16.04:
 ```
