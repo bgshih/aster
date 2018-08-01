@@ -8,12 +8,12 @@ The implementation of ASTER reuses code from [Tensorflow Object Detection API](h
 
 ## Prerequisites
 
-ASTER is developed and tested with *TensorFlow r1.4*.
+ASTER was developed and tested with **TensorFlow r1.4**. Higher versions may not work.
 
 ASTER requires [Protocol Buffers](https://github.com/google/protobuf) (version>=2.6). Besides, in Ubuntu 16.04:
 ```
 sudo apt install cmake libcupti-dev
-pip3 install --user tensorflow-gpu protobuf tqdm numpy editdistance
+pip3 install --user protobuf tqdm numpy editdistance
 ```
 
 ## Installation
