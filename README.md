@@ -6,6 +6,14 @@ ASTER is an accurate scene text recognizer with flexible rectification mechanism
 
 The implementation of ASTER reuses code from [Tensorflow Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection).
 
+## Correction (10/22/2018)
+
+We have identified a bug we accidentally made in the code that causes only part of SVT images being tested and results in higher results. The bug has been fixed in commit [a7e8613](https://github.com/bgshih/aster/commit/a7e8613d6308e5a7aacb1237dfa0286d73cef342). Below are the corrected numbers on SVT. The results are still state-of-the-art, so the conclusions are not affected.
+
+  - SVT (50) ASTER: 97.4%; ASTER-A: 96.3%; ASTER-B: 96.1%; 
+  - SVT (None): ASTER: 89.5%; ASTER-A: 80.2%; ASTER-B: 81.6%
+
+
 ## Prerequisites
 
 ASTER was developed and tested with **TensorFlow r1.4**. Higher versions may not work.
