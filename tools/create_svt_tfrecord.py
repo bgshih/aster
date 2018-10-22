@@ -57,7 +57,7 @@ def create_svt_subset(output_path):
         fields.TfExampleFields.image_format: \
           dataset_util.bytes_feature('jpeg'.encode('utf-8')),
         fields.TfExampleFields.filename: \
-          dataset_util.bytes_feature(image_rel_path.encode('utf-8')),
+          dataset_util.bytes_feature(crop_name.encode('utf-8')),
         fields.TfExampleFields.channels: \
           dataset_util.int64_feature(3),
         fields.TfExampleFields.colorspace: \
